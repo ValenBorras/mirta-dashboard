@@ -66,7 +66,7 @@ export function AIProcessButton({ onComplete }: AIProcessButtonProps) {
         }, 250)
       }, 5000)
 
-    } catch (err) {
+    } catch {
       clearInterval(interval)
       setProgress(100)
       setStatus('error')

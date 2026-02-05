@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
     const systemPrompt = loadSystemPrompt()
     
     // Obtener noticias no procesadas de Supabase
-    let query: any = supabaseAdmin
+    let query = supabaseAdmin
       .from('noticia')
       .select('*')
       .eq('procesado_llm', false)
