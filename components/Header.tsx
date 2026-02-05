@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { Search, Bell, Settings, Menu, User, Users, LogOut } from 'lucide-react'
-// import { ScraperButton } from './ScraperButton'
+import { ScraperButton } from './ScraperButton'
 // import { AIProcessButton } from './AIProcessButton'
 import Image from 'next/image'
 
@@ -93,7 +93,7 @@ export function Header({ onSearch, mencionesCount, onRefresh, onGestionAgentes }
           <div className="flex items-center gap-2">
             {/* Botones: Scraper, Procesamiento IA y Gestión Agentes */}
             <div className="flex items-center gap-2">
-              {/* <ScraperButton onComplete={onRefresh} /> */}
+              <ScraperButton onComplete={onRefresh} />
               {/* <AIProcessButton onComplete={onRefresh} /> */}
               {onGestionAgentes && (
                 <button
