@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Bell, Settings, Menu, User } from 'lucide-react'
+import { Search, Bell, Settings, Menu, User, Users } from 'lucide-react'
 import { ScraperButton } from './ScraperButton'
 import { AIProcessButton } from './AIProcessButton'
 import type { Usuario } from '@/types/database'
@@ -11,9 +11,10 @@ interface HeaderProps {
   onSearch: (query: string) => void
   mencionesCount: number
   onRefresh?: () => void
+  onGestionAgentes?: () => void
 }
 
-export function Header({ usuario, onSearch, mencionesCount, onRefresh }: HeaderProps) {
+export function Header({ usuario, onSearch, mencionesCount, onRefresh, onGestionAgentes }: HeaderProps) {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [searchQuery, setSearchQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -84,10 +85,20 @@ export function Header({ usuario, onSearch, mencionesCount, onRefresh }: HeaderP
 
           {/* Usuario y acciones */}
           <div className="flex items-center gap-2">
-            {/* Botones: Scraper y Procesamiento IA */}
+            {/* Botones: Scraper, Procesamiento IA y Gestión Agentes */}
             <div className="flex items-center gap-2">
               <ScraperButton onComplete={onRefresh} />
               <AIProcessButton onComplete={onRefresh} />
+              {onGestionAgentes && (
+                <button
+                  onClick={onGestionAgentes}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors text-sm font-medium"
+                  title="Gestionar Agentes de Campo"
+                >
+                  <Users className="w-4 h-4" />
+                  <span className="hidden lg:inline">Agentes</span>
+                </button>
+              )}
             </div>
 
             {mencionesCount > 0 && (

@@ -9,6 +9,7 @@ import { ReportesCampo } from '@/components/ReportesCampo'
 import { Tendencias } from '@/components/Tendencias'
 import { MencionesUsuario } from '@/components/MencionesUsuario'
 import { NoticiaModal } from '@/components/NoticiaModal'
+import { GestionAgentes } from '@/components/GestionAgentes'
 import { 
   useNoticias, 
   useNoticiasHoy, 
@@ -24,6 +25,7 @@ export default function Dashboard() {
     busqueda?: string
   }>({})
   const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null)
+  const [showGestionAgentes, setShowGestionAgentes] = useState(false)
 
   const { usuario } = useUsuario()
   const { stats, loading: loadingStats, refetch: refetchStats } = useNoticiasHoy()
@@ -75,6 +77,11 @@ export default function Dashboard() {
     refetchStats()
   }, [refetchNoticias, refetchStats])
 
+  // Si se muestra la gestión de agentes, renderizar ese componente
+  if (showGestionAgentes) {
+    return <GestionAgentes onClose={() => setShowGestionAgentes(false)} />
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
@@ -82,6 +89,7 @@ export default function Dashboard() {
         onSearch={handleSearch}
         mencionesCount={mencionesCount}
         onRefresh={handleScraperComplete}
+        onGestionAgentes={() => setShowGestionAgentes(true)}
       />
 
       <main className="max-w-[1920px] mx-auto px-4 sm:px-6 py-6">

@@ -17,9 +17,11 @@ import { supabaseAdmin } from '@/lib/supabase-server';
 
 interface WhatsAppInboundMessage {
   user_phone: string;
+  conversation_id: string;
+  timestamp: string;
+  sender_type: 'USER' | 'AI' | 'OPERATOR';
   message_text: string;
   message_id: string;
-  timestamp?: string;
 }
 
 // Almacenamiento en memoria de session IDs de OpenAI por teléfono
@@ -36,19 +38,20 @@ export async function POST(request: NextRequest) {
     const body: WhatsAppInboundMessage = await request.json();
 
     // Validar campos requeridos
-    if (!body.user_phone || !body.message_text) {
+    if (!body.user_phone || !body.message_text || !body.conversation_id || !body.message_id) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields: user_phone, message_text' },
+        { success: false, error: 'Missing required fields: user_phone, message_text, conversation_id, message_id' },
         { status: 400 }
       );
     }
 
-    const { user_phone, message_text } = body;
+    const { user_phone, message_text, conversation_id } = body;
     
     // Normalizar número de teléfono (remover espacios, guiones, etc.)
     const normalizedPhone = normalizePhoneNumber(user_phone);
     
     console.log(`📨 Reporte de campo recibido de ${normalizedPhone}: "${message_text}"`);
+    console.log(`📋 Conversation ID: ${conversation_id}`);
 
     // Verificar si el teléfono está en la whitelist
     const agent = await checkWhitelist(normalizedPhone);
@@ -66,9 +69,9 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Agente autorizado: ${agent.nombre} (${agent.provincia})`);
 
-    // Procesar el mensaje con el agente AI
+    // Procesar el mensaje con el agente AI (usamos conversation_id para la sesión)
     const aiResponse = await processFieldReportMessage(
-      normalizedPhone,
+      conversation_id,
       message_text,
       agent
     );
@@ -80,7 +83,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       authorized: true,
-      agent_name: agent.nombre
+      agent_name: agent.nombre,
+      conversation_id
     });
 
   } catch (error) {
@@ -134,17 +138,17 @@ async function checkWhitelist(phone: string): Promise<{
  * Procesa el mensaje del agente de campo usando OpenAI
  */
 async function processFieldReportMessage(
-  phone: string,
+  conversationId: string,
   messageText: string,
   agent: { id: number; nombre: string; provincia: string | null; ciudad: string | null }
 ): Promise<string | null> {
   try {
-    // Obtener o crear session ID para este teléfono
-    let sessionId: string | undefined = conversationSessions.get(phone);
+    // Obtener o crear session ID para esta conversación
+    let sessionId: string | undefined = conversationSessions.get(conversationId);
     
     // Comando especial para resetear conversación
     if (messageText.toLowerCase() === '!reset' || messageText.toLowerCase() === '!nuevo') {
-      conversationSessions.delete(phone);
+      conversationSessions.delete(conversationId);
       return '✅ Conversación reiniciada. Puedes comenzar a contarme sobre un nuevo reporte de campo.';
     }
 
@@ -153,8 +157,8 @@ async function processFieldReportMessage(
       const newSession = await createOpenAISession();
       if (newSession) {
         sessionId = newSession;
-        conversationSessions.set(phone, sessionId);
-        console.log(`📝 Nueva sesión creada para ${phone}: ${sessionId}`);
+        conversationSessions.set(conversationId, sessionId);
+        console.log(`📝 Nueva sesión creada para ${conversationId}: ${sessionId}`);
       }
     }
 

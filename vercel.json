@@ -1,0 +1,7 @@
+{
+  "crons": [{
+    "path": "/api/scrape",
+    "method": "POST",
+    "schedule": "@hourly"
+  }]
+}
