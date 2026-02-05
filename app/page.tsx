@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import { Header } from '@/components/Header'
 import { KPICards } from '@/components/KPICards'
 import { AlertasUrgentes } from '@/components/AlertasUrgentes'
@@ -13,12 +14,12 @@ import { GestionAgentes } from '@/components/GestionAgentes'
 import { 
   useNoticias, 
   useNoticiasHoy, 
-  useUsuario, 
   useMencionesUsuario,
   useTendencias 
 } from '@/hooks/useNoticias'
 
 export default function Dashboard() {
+  const { data: session } = useSession()
   const [filters, setFilters] = useState<{
     categoria?: string
     urgencia?: 'alta' | 'media' | 'baja'
@@ -27,12 +28,11 @@ export default function Dashboard() {
   const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null)
   const [showGestionAgentes, setShowGestionAgentes] = useState(false)
 
-  const { usuario } = useUsuario()
   const { stats, loading: loadingStats, refetch: refetchStats } = useNoticiasHoy()
   const { noticias, loading: loadingNoticias, refetch: refetchNoticias } = useNoticias(filters)
   const { tendencias, loading: loadingTendencias } = useTendencias()
   const { menciones, count: mencionesCount, loading: loadingMenciones } = useMencionesUsuario(
-    usuario?.nombre || ''
+    session?.user?.name || ''
   )
 
   // Noticias urgentes
@@ -85,7 +85,6 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
-        usuario={usuario}
         onSearch={handleSearch}
         mencionesCount={mencionesCount}
         onRefresh={handleScraperComplete}
@@ -129,7 +128,7 @@ export default function Dashboard() {
             {/* Menciones del usuario */}
             {mencionesCount > 0 && (
               <MencionesUsuario
-                nombreUsuario={usuario?.nombre || ''}
+                nombreUsuario={session?.user?.name || ''}
                 menciones={menciones}
                 count={mencionesCount}
                 loading={loadingMenciones}

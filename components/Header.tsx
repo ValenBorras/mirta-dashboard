@@ -1,23 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Bell, Settings, Menu, User, Users } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
+import { Search, Bell, Settings, Menu, User, Users, LogOut } from 'lucide-react'
 import { ScraperButton } from './ScraperButton'
 import { AIProcessButton } from './AIProcessButton'
-import type { Usuario } from '@/types/database'
+import Image from 'next/image'
 
 interface HeaderProps {
-  usuario: Usuario | null
   onSearch: (query: string) => void
   mencionesCount: number
   onRefresh?: () => void
   onGestionAgentes?: () => void
 }
 
-export function Header({ usuario, onSearch, mencionesCount, onRefresh, onGestionAgentes }: HeaderProps) {
+export function Header({ onSearch, mencionesCount, onRefresh, onGestionAgentes }: HeaderProps) {
+  const { data: session } = useSession()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [searchQuery, setSearchQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
@@ -42,9 +44,13 @@ export function Header({ usuario, onSearch, mencionesCount, onRefresh, onGestion
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">M</span>
-              </div>
+              <Image
+                src="/LogoMIRTA.png"
+                alt="MIRTA Logo"
+                width={36}
+                height={36}
+                className="rounded-lg"
+              />
               <div className="hidden sm:block">
                 <h1 className="text-lg font-bold text-gray-900">MIRTA</h1>
                 <p className="text-[10px] text-gray-500 -mt-1 leading-tight">
@@ -117,18 +123,40 @@ export function Header({ usuario, onSearch, mencionesCount, onRefresh, onGestion
               <Settings className="w-5 h-5 text-gray-600" />
             </button>
 
-            <div className="hidden sm:flex items-center gap-2 ml-2 pl-4 border-l border-gray-200">
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-gray-600" />
-              </div>
-              <div className="hidden lg:block">
-                <p className="text-sm font-medium text-gray-900">
-                  {usuario?.nombre || 'Usuario'}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {usuario?.cargo || 'Legislador'}
-                </p>
-              </div>
+            <div className="hidden sm:flex items-center gap-2 ml-2 pl-4 border-l border-gray-200 relative">
+              <button 
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1 transition-colors"
+              >
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="hidden lg:block text-left">
+                  <p className="text-sm font-medium text-gray-900">
+                    {session?.user?.name || 'Usuario'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {session?.user?.cargo || 'Legislador'}
+                  </p>
+                </div>
+              </button>
+              
+              {/* Dropdown menu */}
+              {showUserMenu && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900">{session?.user?.name}</p>
+                    <p className="text-xs text-gray-500">{session?.user?.email}</p>
+                  </div>
+                  <button
+                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
