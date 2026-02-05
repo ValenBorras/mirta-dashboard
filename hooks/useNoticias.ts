@@ -69,6 +69,43 @@ export function useNoticias(filters: Filters = {}) {
   return { noticias, loading, error, refetch: fetchNoticias }
 }
 
+export function useReportesCampo() {
+  const [reportes, setReportes] = useState<NoticiaConRelaciones[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchReportes = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('noticia')
+        .select(`
+          *,
+          noticiero:noticiero_id(nombre),
+          agente:agente_id(nombre, provincia)
+        `)
+        .eq('tipo_fuente', 'agente')
+        .order('fecha_publicacion', { ascending: false })
+        .limit(100)
+
+      if (fetchError) throw fetchError
+      setReportes((data as NoticiaConRelaciones[]) || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar reportes')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchReportes()
+  }, [fetchReportes])
+
+  return { reportes, loading, error, refetch: fetchReportes }
+}
+
 export function useNoticiasHoy() {
   const [stats, setStats] = useState({
     hoy: 0,
@@ -105,7 +142,6 @@ export function useNoticiasHoy() {
           .from('noticia')
           .select('id', { count: 'exact', head: true })
           .eq('tipo_fuente', 'agente')
-          .gte('fecha_publicacion', hoy.toISOString())
       ])
 
       setStats({

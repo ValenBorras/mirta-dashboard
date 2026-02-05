@@ -1,6 +1,6 @@
 'use client'
 
-import { Radio, MapPin, CheckCircle, ChevronRight } from 'lucide-react'
+import { Radio, MapPin, CheckCircle } from 'lucide-react'
 import { formatRelativeTime, truncateText } from '@/lib/utils'
 
 interface ReporteConAgente {
@@ -16,10 +16,9 @@ interface ReportesCampoProps {
   reportes: ReporteConAgente[]
   loading?: boolean
   onReporteClick?: (id: number) => void
-  onVerTodos?: () => void
 }
 
-export function ReportesCampo({ reportes, loading, onReporteClick, onVerTodos }: ReportesCampoProps) {
+export function ReportesCampo({ reportes, loading, onReporteClick }: ReportesCampoProps) {
   if (loading) {
     return (
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
@@ -48,13 +47,13 @@ export function ReportesCampo({ reportes, loading, onReporteClick, onVerTodos }:
         <span className="text-sm text-blue-600 font-medium">{reportes.length}</span>
       </div>
 
-      <div className="p-3 space-y-2 max-h-[400px] overflow-y-auto">
+      <div className="p-3 space-y-2 max-h-[500px] overflow-y-auto">
         {reportes.length === 0 ? (
           <div className="text-center py-6 text-gray-500 text-sm">
             No hay reportes de campo recientes
           </div>
         ) : (
-          reportes.slice(0, 5).map((reporte) => (
+          reportes.map((reporte) => (
             <div
               key={reporte.id}
               onClick={() => onReporteClick?.(reporte.id)}
@@ -95,16 +94,6 @@ export function ReportesCampo({ reportes, loading, onReporteClick, onVerTodos }:
           ))
         )}
       </div>
-
-      {reportes.length > 5 && (
-        <button
-          onClick={onVerTodos}
-          className="w-full p-3 text-sm font-medium text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center gap-1 border-t border-blue-200"
-        >
-          Ver todos los reportes
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      )}
     </div>
   )
 }

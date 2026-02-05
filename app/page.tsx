@@ -15,7 +15,8 @@ import {
   useNoticias, 
   useNoticiasHoy, 
   useMencionesUsuario,
-  useTendencias 
+  useTendencias,
+  useReportesCampo
 } from '@/hooks/useNoticias'
 
 export default function Dashboard() {
@@ -30,6 +31,7 @@ export default function Dashboard() {
 
   const { stats, loading: loadingStats, refetch: refetchStats } = useNoticiasHoy()
   const { noticias, loading: loadingNoticias, refetch: refetchNoticias } = useNoticias(filters)
+  const { reportes: reportesCampo, loading: loadingReportes } = useReportesCampo()
   const { tendencias, loading: loadingTendencias } = useTendencias()
   const { menciones, count: mencionesCount, loading: loadingMenciones } = useMencionesUsuario(
     session?.user?.name || ''
@@ -38,12 +40,6 @@ export default function Dashboard() {
   // Noticias urgentes
   const noticiasUrgentes = useMemo(() => 
     noticias.filter(n => n.urgencia === 'alta'),
-    [noticias]
-  )
-
-  // Reportes de campo
-  const reportesCampo = useMemo(() => 
-    noticias.filter(n => n.tipo_fuente === 'agente'),
     [noticias]
   )
 
@@ -139,7 +135,7 @@ export default function Dashboard() {
             {/* Reportes de campo */}
             <ReportesCampo
               reportes={reportesCampo}
-              loading={loadingNoticias}
+              loading={loadingReportes}
               onReporteClick={setSelectedNoticiaId}
             />
 
