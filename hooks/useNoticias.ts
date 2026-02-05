@@ -1,0 +1,245 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '@/lib/supabase'
+import type { Usuario, NoticiaConRelaciones } from '@/types/database'
+
+interface Filters {
+  categoria?: string
+  urgencia?: 'alta' | 'media' | 'baja'
+  tipo_fuente?: 'noticiero' | 'agente'
+  fecha_desde?: string
+  fecha_hasta?: string
+  busqueda?: string
+}
+
+export function useNoticias(filters: Filters = {}) {
+  const [noticias, setNoticias] = useState<NoticiaConRelaciones[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchNoticias = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      let query = supabase
+        .from('noticia')
+        .select(`
+          *,
+          noticiero:noticiero_id(nombre),
+          agente:agente_id(nombre, provincia)
+        `)
+        .order('fecha_publicacion', { ascending: false })
+
+      if (filters.categoria) {
+        query = query.eq('categoria', filters.categoria)
+      }
+      if (filters.urgencia) {
+        query = query.eq('urgencia', filters.urgencia)
+      }
+      if (filters.tipo_fuente) {
+        query = query.eq('tipo_fuente', filters.tipo_fuente)
+      }
+      if (filters.fecha_desde) {
+        query = query.gte('fecha_publicacion', filters.fecha_desde)
+      }
+      if (filters.fecha_hasta) {
+        query = query.lte('fecha_publicacion', filters.fecha_hasta)
+      }
+      if (filters.busqueda) {
+        query = query.or(`titulo.ilike.%${filters.busqueda}%,descripcion.ilike.%${filters.busqueda}%`)
+      }
+
+      const { data, error: fetchError } = await query.limit(50)
+
+      if (fetchError) throw fetchError
+      setNoticias((data as NoticiaConRelaciones[]) || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar noticias')
+    } finally {
+      setLoading(false)
+    }
+  }, [filters.categoria, filters.urgencia, filters.tipo_fuente, filters.fecha_desde, filters.fecha_hasta, filters.busqueda])
+
+  useEffect(() => {
+    fetchNoticias()
+  }, [fetchNoticias])
+
+  return { noticias, loading, error, refetch: fetchNoticias }
+}
+
+export function useNoticiasHoy() {
+  const [stats, setStats] = useState({
+    hoy: 0,
+    ayer: 0,
+    urgentes: 0,
+    reportesCampo: 0
+  })
+  const [loading, setLoading] = useState(true)
+
+  const fetchStats = useCallback(async () => {
+    setLoading(true)
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+    const ayer = new Date(hoy)
+    ayer.setDate(ayer.getDate() - 1)
+
+    try {
+      const [hoyResult, ayerResult, urgentesResult, reportesResult] = await Promise.all([
+        supabase
+          .from('noticia')
+          .select('id', { count: 'exact', head: true })
+          .gte('fecha_publicacion', hoy.toISOString()),
+        supabase
+          .from('noticia')
+          .select('id', { count: 'exact', head: true })
+          .gte('fecha_publicacion', ayer.toISOString())
+          .lt('fecha_publicacion', hoy.toISOString()),
+        supabase
+          .from('noticia')
+          .select('id', { count: 'exact', head: true })
+          .eq('urgencia', 'alta')
+          .gte('fecha_publicacion', hoy.toISOString()),
+        supabase
+          .from('noticia')
+          .select('id', { count: 'exact', head: true })
+          .eq('tipo_fuente', 'agente')
+          .gte('fecha_publicacion', hoy.toISOString())
+      ])
+
+      setStats({
+        hoy: hoyResult.count || 0,
+        ayer: ayerResult.count || 0,
+        urgentes: urgentesResult.count || 0,
+        reportesCampo: reportesResult.count || 0
+      })
+    } catch (err) {
+      console.error('Error fetching stats:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchStats()
+  }, [fetchStats])
+
+  return { stats, loading, refetch: fetchStats }
+}
+
+export function useUsuario() {
+  const [usuario, setUsuario] = useState<Usuario | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // En un caso real, esto vendría de la autenticación
+    // Por ahora usamos un usuario de ejemplo
+    setUsuario({
+      id: 1,
+      nombre: 'María González',
+      email: 'maria.gonzalez@legislatura.gob.ar',
+      password_hash: '',
+      cargo: 'Diputada Nacional',
+      provincia: 'Buenos Aires',
+      activo: true,
+      created_at: new Date().toISOString()
+    })
+    setLoading(false)
+  }, [])
+
+  return { usuario, loading }
+}
+
+export function useMencionesUsuario(nombreUsuario: string) {
+  const [menciones, setMenciones] = useState<NoticiaConRelaciones[]>([])
+  const [count, setCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchMenciones() {
+      if (!nombreUsuario) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const { data, error, count: totalCount } = await supabase
+          .from('noticia')
+          .select(`
+            *,
+            noticiero:noticiero_id(nombre),
+            agente:agente_id(nombre, provincia)
+          `, { count: 'exact' })
+          .or(`titulo.ilike.%${nombreUsuario}%,cuerpo.ilike.%${nombreUsuario}%,descripcion.ilike.%${nombreUsuario}%`)
+          .order('fecha_publicacion', { ascending: false })
+          .limit(10)
+
+        if (error) throw error
+        setMenciones((data as NoticiaConRelaciones[]) || [])
+        setCount(totalCount || 0)
+      } catch (err) {
+        console.error('Error fetching menciones:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMenciones()
+  }, [nombreUsuario])
+
+  return { menciones, count, loading }
+}
+
+export function useTendencias() {
+  const [tendencias, setTendencias] = useState<{ palabra: string; count: number }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchTendencias() {
+      try {
+        const hoy = new Date()
+        hoy.setHours(0, 0, 0, 0)
+
+        const { data, error } = await supabase
+          .from('noticia')
+          .select('palabras_clave, categoria')
+          .gte('fecha_publicacion', hoy.toISOString())
+
+        if (error) throw error
+
+        // Contar palabras clave
+        const conteo: Record<string, number> = {}
+        interface NoticiaData {
+          palabras_clave: string[] | null
+          categoria: string | null
+        }
+        (data as NoticiaData[] | null)?.forEach(noticia => {
+          if (noticia.palabras_clave && Array.isArray(noticia.palabras_clave)) {
+            noticia.palabras_clave.forEach((palabra: string) => {
+              conteo[palabra] = (conteo[palabra] || 0) + 1
+            })
+          }
+          if (noticia.categoria) {
+            conteo[noticia.categoria] = (conteo[noticia.categoria] || 0) + 1
+          }
+        })
+
+        const ordenado = Object.entries(conteo)
+          .map(([palabra, count]) => ({ palabra, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5)
+
+        setTendencias(ordenado)
+      } catch (err) {
+        console.error('Error fetching tendencias:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTendencias()
+  }, [])
+
+  return { tendencias, loading }
+}
