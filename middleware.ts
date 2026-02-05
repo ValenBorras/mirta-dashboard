@@ -10,7 +10,14 @@ export default withAuth(
     callbacks: {
       authorized: ({ token, req }) => {
         // Rutas públicas que no requieren autenticación
-        const publicPaths = ['/login', '/api/auth']
+        const publicPaths = [
+          '/login', 
+          '/api/auth',
+          '/api/field-reports',      // Webhook para reportes de campo (n8n)
+          '/api/tools/save-field-report', // Tool del agente AI
+          '/api/scrape',             // Scraper
+          '/api/process-news'        // Procesamiento de noticias
+        ]
         const isPublicPath = publicPaths.some(path => 
           req.nextUrl.pathname.startsWith(path)
         )

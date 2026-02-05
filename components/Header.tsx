@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { Search, Bell, Settings, Menu, User, Users, LogOut } from 'lucide-react'
-import { ScraperButton } from './ScraperButton'
-import { AIProcessButton } from './AIProcessButton'
+// import { ScraperButton } from './ScraperButton'
+// import { AIProcessButton } from './AIProcessButton'
 import Image from 'next/image'
 
 interface HeaderProps {
