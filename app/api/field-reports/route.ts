@@ -28,7 +28,7 @@ interface WhatsAppInboundMessage {
 // En producción podrías usar Redis u otro almacenamiento persistente
 const conversationSessions: Map<string, string> = new Map();
 
-const REJECTION_MESSAGE = `Hola, te comunicaste con M.I.R.T.A. Tu número de teléfono no se encuentra registrado en la base de datos. Si ud es un agente de campo por favor comuníquese con su legislador de confianza.`;
+const REJECTION_MESSAGE = `Tu número no corresponde a ningún agente registrado.`;
 
 /**
  * POST handler - Webhook entry point from n8n
