@@ -93,7 +93,7 @@ export function Header({ onSearch, mencionesCount, onRefresh, onGestionAgentes }
           <div className="flex items-center gap-2">
             {/* Botones: Scraper, Procesamiento IA y Gestión Agentes */}
             <div className="flex items-center gap-2">
-              <ScraperButton onComplete={onRefresh} />
+              {/* <ScraperButton onComplete={onRefresh} /> */}
               {/* <AIProcessButton onComplete={onRefresh} /> */}
               {onGestionAgentes && (
                 <button
