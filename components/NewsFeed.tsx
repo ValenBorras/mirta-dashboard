@@ -10,9 +10,10 @@ import {
   Radio,
   Filter,
   ChevronDown,
-  Newspaper
+  Newspaper,
+  Globe
 } from 'lucide-react'
-import { formatRelativeTime, truncateText } from '@/lib/utils'
+import { formatRelativeTime, truncateText, formatUbicacion } from '@/lib/utils'
 import { CATEGORIA_COLORS, URGENCIA_COLORS, CATEGORIAS } from '@/types/database'
 import type { NoticiaConRelaciones, Noticiero } from '@/types/database'
 
@@ -24,6 +25,7 @@ interface NewsFeedProps {
     categoria?: string
     urgencia?: string
     tipo_fuente?: string
+    nivel_geografico?: 'internacional' | 'nacional' | 'provincial' | 'municipal'
     fecha_desde?: string
     fecha_hasta?: string
     noticieros_ids?: number[]
@@ -31,6 +33,8 @@ interface NewsFeedProps {
   noticieros?: Noticiero[]
   noticierosLoading?: boolean
   selectedNoticierosIds?: number[]
+  userProvincia?: string | null
+  userCiudad?: string | null
 }
 
 export function NewsFeed({ 
@@ -40,24 +44,29 @@ export function NewsFeed({
   onFilterChange,
   noticieros = [],
   noticierosLoading,
-  selectedNoticierosIds = []
+  selectedNoticierosIds = [],
+  userProvincia,
+  userCiudad
 }: NewsFeedProps) {
   const [showFilters, setShowFilters] = useState(false)
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('')
   const [urgenciaFiltro, setUrgenciaFiltro] = useState<string>('')
+  const [nivelGeograficoFiltro, setNivelGeograficoFiltro] = useState<string>('')
   const [fechaDesdeFiltro, setFechaDesdeFiltro] = useState<string>('')
   const [fechaHastaFiltro, setFechaHastaFiltro] = useState<string>('')
   const [noticierosSeleccionados, setNoticierosSeleccionados] = useState<number[]>(selectedNoticierosIds)
 
-  const handleFilterChange = (tipo: 'categoria' | 'urgencia' | 'fecha_desde' | 'fecha_hasta', valor: string) => {
+  const handleFilterChange = (tipo: 'categoria' | 'urgencia' | 'nivel_geografico' | 'fecha_desde' | 'fecha_hasta', valor: string) => {
     if (tipo === 'categoria') setCategoriaFiltro(valor)
     if (tipo === 'urgencia') setUrgenciaFiltro(valor)
+    if (tipo === 'nivel_geografico') setNivelGeograficoFiltro(valor)
     if (tipo === 'fecha_desde') setFechaDesdeFiltro(valor)
     if (tipo === 'fecha_hasta') setFechaHastaFiltro(valor)
     
     onFilterChange?.({
       categoria: tipo === 'categoria' ? valor : categoriaFiltro,
       urgencia: tipo === 'urgencia' ? valor : urgenciaFiltro,
+      nivel_geografico: (tipo === 'nivel_geografico' ? valor : nivelGeograficoFiltro) as 'internacional' | 'nacional' | 'provincial' | 'municipal' | undefined,
       fecha_desde: tipo === 'fecha_desde' ? valor : fechaDesdeFiltro || undefined,
       fecha_hasta: tipo === 'fecha_hasta' ? valor : fechaHastaFiltro || undefined,
       noticieros_ids: noticierosSeleccionados.length > 0 ? noticierosSeleccionados : undefined
@@ -69,6 +78,7 @@ export function NewsFeed({
     onFilterChange?.({
       categoria: categoriaFiltro || undefined,
       urgencia: urgenciaFiltro || undefined,
+      nivel_geografico: nivelGeograficoFiltro as 'internacional' | 'nacional' | 'provincial' | 'municipal' | undefined,
       fecha_desde: fechaDesdeFiltro || undefined,
       fecha_hasta: fechaHastaFiltro || undefined,
       noticieros_ids: ids.length > 0 ? ids : undefined
@@ -86,6 +96,7 @@ export function NewsFeed({
   const filtrosActivos = [
     categoriaFiltro,
     urgenciaFiltro,
+    nivelGeograficoFiltro,
     fechaDesdeFiltro,
     fechaHastaFiltro,
     noticierosSeleccionados.length > 0 ? 'noticieros' : ''
@@ -183,6 +194,47 @@ export function NewsFeed({
                 className="w-full px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               />
             </div>
+          </div>
+
+          {/* Filtros de alcance geográfico */}
+          <div>
+            <div className="flex items-center gap-1 mb-2">
+              <Globe className="w-3.5 h-3.5 text-gray-500" />
+              <label className="text-xs font-medium text-gray-500">Alcance geográfico</label>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: '', label: 'Todos' },
+                { value: 'internacional', label: 'Internacional' },
+                { value: 'nacional', label: 'Nacional' },
+                { value: 'provincial', label: userProvincia ? `Provincial (${userProvincia})` : 'Provincial', disabled: !userProvincia },
+                { value: 'municipal', label: userCiudad ? `Municipal (${userCiudad})` : 'Municipal', disabled: !userCiudad }
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => !option.disabled && handleFilterChange('nivel_geografico', option.value)}
+                  disabled={option.disabled}
+                  className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all ${
+                    nivelGeograficoFiltro === option.value
+                      ? 'bg-blue-100 border border-blue-300 text-blue-700 font-medium'
+                      : option.disabled
+                        ? 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-700'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {(!userProvincia || !userCiudad) && (
+              <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                <span>💡</span>
+                {!userProvincia 
+                  ? 'Configura tu provincia en tu perfil para filtrar noticias provinciales'
+                  : 'Configura tu ciudad en tu perfil para filtrar noticias municipales'
+                }
+              </p>
+            )}
           </div>
 
           {/* Selector de noticieros */}
@@ -302,11 +354,6 @@ export function NewsFeed({
                         Urgente
                       </span>
                     )}
-                    {noticia.requiere_accion && (
-                      <span className="hidden sm:inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
-                        Acción
-                      </span>
-                    )}
                   </div>
 
                   {/* Título */}
@@ -333,10 +380,10 @@ export function NewsFeed({
                         <Clock className="w-3 h-3" />
                         {formatRelativeTime(noticia.fecha_publicacion)}
                       </span>
-                      {noticia.ubicacion_geografica && (
+                      {formatUbicacion(noticia.provincia, noticia.ciudad) && (
                         <span className="hidden sm:flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
-                          {noticia.ubicacion_geografica}
+                          {formatUbicacion(noticia.provincia, noticia.ciudad)}
                         </span>
                       )}
                     </div>

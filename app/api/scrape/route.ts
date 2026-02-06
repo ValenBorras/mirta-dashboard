@@ -402,8 +402,7 @@ async function saveNoticia(noticia: NoticiaExtraida, noticieroId: number): Promi
       tipo_fuente: 'noticiero',
       noticiero_id: noticieroId,
       urgencia: 'media',
-      procesado_llm: false,
-      requiere_accion: false
+      procesado_llm: false
     })
 
     if (error) {

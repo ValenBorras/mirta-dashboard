@@ -5,6 +5,7 @@ export interface Usuario {
   password_hash: string
   cargo: string | null
   provincia: string | null
+  ciudad: string | null
   activo: boolean
   created_at: string
 }
@@ -41,13 +42,13 @@ export interface Noticia {
   fuente_base: string | null
   extraido_en: string | null
   categoria: string | null
+  resumen: string | null
   urgencia: 'alta' | 'media' | 'baja'
   sentimiento: 'positivo' | 'neutral' | 'negativo' | null
-  ubicacion_geografica: string | null
   nivel_geografico: 'internacional' | 'nacional' | 'provincial' | 'municipal' | null
+  provincia: string | null
+  ciudad: string | null
   palabras_clave: string[] | null
-  impacto_legislativo: string | null
-  requiere_accion: boolean
   procesado_llm: boolean
   tipo_fuente: 'noticiero' | 'agente'
   noticiero_id: number | null

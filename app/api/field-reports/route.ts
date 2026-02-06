@@ -250,7 +250,7 @@ async function callFieldReportAgent(
         name: 'save_field_report',
         description: `Guarda un reporte de campo como noticia en la base de datos. 
 IMPORTANTE: Solo usa esta función cuando tengas TODOS los datos necesarios confirmados por el agente.
-Los campos obligatorios son: titulo, descripcion, categoria, ubicacion_geografica, fecha_evento.
+Los campos obligatorios son: titulo, descripcion, categoria, provincia, ciudad, fecha_evento.
 La urgencia es opcional y por defecto es "media".`,
         parameters: {
           type: 'object',
@@ -277,9 +277,13 @@ La urgencia es opcional y por defecto es "media".`,
               enum: ['alta', 'media', 'baja'],
               description: 'Nivel de urgencia del reporte'
             },
-            ubicacion_geografica: {
+            provincia: {
               type: 'string',
-              description: 'Ubicación donde ocurrió el evento (ciudad, barrio, dirección)'
+              description: 'Provincia argentina donde ocurrió el evento'
+            },
+            ciudad: {
+              type: 'string',
+              description: 'Ciudad o municipio donde ocurrió el evento'
             },
             fecha_evento: {
               type: 'string',
@@ -289,17 +293,9 @@ La urgencia es opcional y por defecto es "media".`,
               type: 'array',
               items: { type: 'string' },
               description: 'Palabras clave relevantes del reporte'
-            },
-            impacto_legislativo: {
-              type: 'string',
-              description: 'Descripción del posible impacto legislativo o político (opcional)'
-            },
-            requiere_accion: {
-              type: 'boolean',
-              description: 'Si el reporte requiere acción inmediata'
             }
           },
-          required: ['titulo', 'descripcion', 'categoria', 'ubicacion_geografica', 'fecha_evento']
+          required: ['titulo', 'descripcion', 'categoria', 'provincia', 'ciudad', 'fecha_evento']
         },
         strict: false
       }

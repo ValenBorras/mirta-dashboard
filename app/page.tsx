@@ -35,7 +35,11 @@ export default function Dashboard() {
   const [showGestionAgentes, setShowGestionAgentes] = useState(false)
 
   const { stats, loading: loadingStats } = useNoticiasHoy()
-  const { noticias, loading: loadingNoticias } = useNoticias(filters)
+  const { noticias, loading: loadingNoticias } = useNoticias({
+    ...filters,
+    userProvincia: session?.user?.provincia,
+    userCiudad: session?.user?.ciudad
+  })
   const { reportes: reportesCampo, loading: loadingReportes } = useReportesCampo()
   const { tendencias, loading: loadingTendencias } = useTendencias()
   const { noticieros, loading: loadingNoticieros } = useNoticieros()
@@ -129,6 +133,8 @@ export default function Dashboard() {
               noticieros={noticieros}
               noticierosLoading={loadingNoticieros}
               selectedNoticierosIds={filters.noticieros_ids || []}
+              userProvincia={session?.user?.provincia}
+              userCiudad={session?.user?.ciudad}
             />
           </div>
 

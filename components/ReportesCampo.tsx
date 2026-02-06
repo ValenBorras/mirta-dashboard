@@ -1,7 +1,7 @@
 'use client'
 
 import { Radio, MapPin, CheckCircle } from 'lucide-react'
-import { formatRelativeTime, truncateText } from '@/lib/utils'
+import { formatRelativeTime, truncateText, formatUbicacion } from '@/lib/utils'
 import type { NoticiaConRelaciones } from '@/types/database'
 
 interface ReportesCampoProps {
@@ -75,10 +75,10 @@ export function ReportesCampo({ reportes, loading, onReporteClick }: ReportesCam
                 <span className="font-medium text-gray-700 truncate">
                   {reporte.agente?.nombre || 'Agente'}
                 </span>
-                {reporte.ubicacion_geografica && (
+                {formatUbicacion(reporte.provincia, reporte.ciudad) && (
                   <span className="flex items-center gap-0.5 truncate">
                     <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
-                    <span className="truncate">{reporte.ubicacion_geografica}</span>
+                    <span className="truncate">{formatUbicacion(reporte.provincia, reporte.ciudad)}</span>
                   </span>
                 )}
               </div>

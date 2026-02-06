@@ -44,7 +44,8 @@ export const authOptions: NextAuthOptions = {
           email: usuario.email,
           name: usuario.nombre,
           cargo: usuario.cargo,
-          provincia: usuario.provincia
+          provincia: usuario.provincia,
+          ciudad: usuario.ciudad
         }
       }
     })
@@ -55,6 +56,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.cargo = user.cargo
         token.provincia = user.provincia
+        token.ciudad = user.ciudad
       }
       return token
     },
@@ -63,6 +65,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string
         session.user.cargo = token.cargo as string | null
         session.user.provincia = token.provincia as string | null
+        session.user.ciudad = token.ciudad as string | null
       }
       return session
     }

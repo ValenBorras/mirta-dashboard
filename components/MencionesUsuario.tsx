@@ -1,7 +1,7 @@
 'use client'
 
 import { User, ExternalLink, Clock, MapPin, X, Radio } from 'lucide-react'
-import { formatDate, formatTime } from '@/lib/utils'
+import { formatDate, formatTime, formatUbicacion } from '@/lib/utils'
 import { CATEGORIA_COLORS, URGENCIA_COLORS } from '@/types/database'
 
 interface NoticiaBasica {
@@ -13,7 +13,8 @@ interface NoticiaBasica {
   fecha_publicacion: string
   categoria: string | null
   urgencia: 'alta' | 'media' | 'baja'
-  ubicacion_geografica: string | null
+  provincia: string | null
+  ciudad: string | null
   tipo_fuente: 'noticiero' | 'agente'
 }
 
@@ -111,10 +112,10 @@ export function MencionesUsuario({
                 <span className="hidden sm:inline">{formatDate(noticia.fecha_publicacion)} {formatTime(noticia.fecha_publicacion)}</span>
                 <span className="sm:hidden">{formatDate(noticia.fecha_publicacion)}</span>
               </span>
-              {noticia.ubicacion_geografica && (
+              {formatUbicacion(noticia.provincia, noticia.ciudad) && (
                 <span className="hidden sm:flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
-                  {noticia.ubicacion_geografica}
+                  {formatUbicacion(noticia.provincia, noticia.ciudad)}
                 </span>
               )}
               {noticia.link && (

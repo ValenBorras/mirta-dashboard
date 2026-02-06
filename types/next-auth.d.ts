@@ -7,6 +7,7 @@ declare module 'next-auth' {
       id: string
       cargo: string | null
       provincia: string | null
+      ciudad: string | null
     } & DefaultSession['user']
   }
 
@@ -14,6 +15,7 @@ declare module 'next-auth' {
     id: string
     cargo?: string | null
     provincia?: string | null
+    ciudad?: string | null
   }
 }
 
@@ -22,5 +24,6 @@ declare module 'next-auth/jwt' {
     id: string
     cargo?: string | null
     provincia?: string | null
+    ciudad?: string | null
   }
 }

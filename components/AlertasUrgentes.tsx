@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertTriangle, MapPin, Clock, ExternalLink, Check } from 'lucide-react'
-import { formatRelativeTime, truncateText } from '@/lib/utils'
+import { formatRelativeTime, truncateText, formatUbicacion } from '@/lib/utils'
 import { CATEGORIA_COLORS } from '@/types/database'
 
 interface NoticiaUrgente {
@@ -9,7 +9,8 @@ interface NoticiaUrgente {
   titulo: string
   descripcion: string | null
   categoria: string | null
-  ubicacion_geografica: string | null
+  provincia: string | null
+  ciudad: string | null
   fecha_publicacion: string
   link: string | null
 }
@@ -85,10 +86,10 @@ export function AlertasUrgentes({ noticias, loading, onNoticiaClick }: AlertasUr
             
             <div className="flex items-center justify-between text-xs text-gray-500">
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                {noticia.ubicacion_geografica && (
+                {formatUbicacion(noticia.provincia, noticia.ciudad) && (
                   <span className="flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
-                    <span className="truncate max-w-[100px]">{noticia.ubicacion_geografica}</span>
+                    <span className="truncate max-w-[100px]">{formatUbicacion(noticia.provincia, noticia.ciudad)}</span>
                   </span>
                 )}
                 <span className="flex items-center gap-1">

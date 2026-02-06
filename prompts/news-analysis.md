@@ -32,13 +32,17 @@ Analiza la noticia proporcionada y extrae la siguiente información en formato J
    - "neutral" - Informativo, sin carga emocional clara
    - "negativo" - Problemas, crisis, conflictos
 
-4. **ubicacion_geografica** (string | null): Ubicación geográfica principal mencionada en la noticia. Puede ser una provincia, ciudad o región de Argentina. Si es de alcance nacional o no hay ubicación específica, devolver null.
+4. **nivel_geografico** (string): Clasifica el alcance geográfico de la noticia:
+   - "internacional" - Noticias sobre otros países o eventos mundiales que no son específicamente de Argentina
+   - "nacional" - Noticias de alcance nacional argentino, sin foco en una provincia específica
+   - "provincial" - Noticias específicas de una provincia argentina
+   - "municipal" - Noticias específicas de una ciudad o municipio argentino
 
-5. **palabras_clave** (array de strings): Lista de 3 a 7 palabras clave o términos relevantes extraídos de la noticia que ayuden a su búsqueda y clasificación.
+5. **provincia** (string | null): Si la noticia es de nivel "provincial" o "municipal", indicar la provincia argentina a la que corresponde. Usar el nombre oficial de la provincia (ej: "Buenos Aires", "Córdoba", "Santa Fe", "Mendoza", etc.). Si es "internacional" o "nacional", devolver null.
 
-6. **impacto_legislativo** (string): Descripción breve (1-3 oraciones) del potencial impacto o relevancia para la actividad legislativa. ¿Qué proyectos de ley podrían verse afectados? ¿Se requiere nueva legislación?
+6. **ciudad** (string | null): Si la noticia es de nivel "municipal", indicar la ciudad o municipio específico. Si es "internacional", "nacional" o "provincial" sin ciudad específica, devolver null.
 
-7. **requiere_accion** (boolean): ¿Esta noticia requiere acción inmediata por parte de legisladores? true si hay una situación que demanda respuesta urgente, debate o propuesta legislativa. false para noticias meramente informativas.
+7. **palabras_clave** (array de strings): Lista de 3 a 7 palabras clave o términos relevantes extraídos de la noticia que ayuden a su búsqueda y clasificación.
 
 8. **resumen** (string): Resumen claro y simple de la noticia completa que abarque todo lo importante que cuenta la noticia. Tono profesional, sintentizado y facil de leer. 
 
@@ -49,13 +53,13 @@ Responde ÚNICAMENTE con un objeto JSON válido con la siguiente estructura:
 ```json
 {
   "categoria": "string",
-  "resumen":"string",
+  "resumen": "string",
   "urgencia": "alta" | "media" | "baja",
   "sentimiento": "positivo" | "neutral" | "negativo",
-  "ubicacion_geografica": "string" | null,
-  "palabras_clave": ["string"],
-  "impacto_legislativo": "string",
-  "requiere_accion": boolean
+  "nivel_geografico": "internacional" | "nacional" | "provincial" | "municipal",
+  "provincia": "string" | null,
+  "ciudad": "string" | null,
+  "palabras_clave": ["string"]
 }
 ```
 

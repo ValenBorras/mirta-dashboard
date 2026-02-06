@@ -13,6 +13,7 @@ CREATE TABLE usuario (
     password_hash VARCHAR(255) NOT NULL,
     cargo VARCHAR(100),
     provincia VARCHAR(100),
+    ciudad VARCHAR(100),
     activo BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -65,11 +66,10 @@ CREATE TABLE noticia (
     resumen TEXT,
     urgencia VARCHAR(20) DEFAULT 'media', -- 'alta', 'media', 'baja'
     sentimiento VARCHAR(20), -- 'positivo', 'neutral', 'negativo'
-    ubicacion_geografica VARCHAR(200),
     nivel_geografico VARCHAR(20), -- 'internacional', 'nacional', 'provincial', 'municipal'
+    provincia VARCHAR(100), -- Provincia argentina si aplica
+    ciudad VARCHAR(100), -- Ciudad/municipio si aplica
     palabras_clave JSON, -- Array de keywords
-    impacto_legislativo TEXT, -- Descripción del impacto potencial
-    requiere_accion BOOLEAN DEFAULT false,
     procesado_llm BOOLEAN DEFAULT false,
     
     -- Clasificación de fuente

@@ -8,10 +8,14 @@ interface Filters {
   categoria?: string
   urgencia?: 'alta' | 'media' | 'baja'
   tipo_fuente?: 'noticiero' | 'agente'
+  nivel_geografico?: 'internacional' | 'nacional' | 'provincial' | 'municipal'
   fecha_desde?: string
   fecha_hasta?: string
   busqueda?: string
   noticieros_ids?: number[]
+  // Datos del usuario para filtrar provincial/municipal
+  userProvincia?: string | null
+  userCiudad?: string | null
 }
 
 export function useNoticias(filters: Filters = {}) {
@@ -56,6 +60,24 @@ export function useNoticias(filters: Filters = {}) {
         query = query.in('noticiero_id', filters.noticieros_ids)
       }
 
+      // Filtros de nivel geográfico
+      if (filters.nivel_geografico) {
+        query = query.eq('nivel_geografico', filters.nivel_geografico)
+        
+        // Para provincial, filtrar también por la provincia del usuario
+        if (filters.nivel_geografico === 'provincial' && filters.userProvincia) {
+          query = query.eq('provincia', filters.userProvincia)
+        }
+        
+        // Para municipal, filtrar por provincia y ciudad del usuario
+        if (filters.nivel_geografico === 'municipal' && filters.userCiudad) {
+          if (filters.userProvincia) {
+            query = query.eq('provincia', filters.userProvincia)
+          }
+          query = query.eq('ciudad', filters.userCiudad)
+        }
+      }
+
       const { data, error: fetchError } = await query.limit(50)
 
       if (fetchError) throw fetchError
@@ -65,7 +87,7 @@ export function useNoticias(filters: Filters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [filters.categoria, filters.urgencia, filters.tipo_fuente, filters.fecha_desde, filters.fecha_hasta, filters.busqueda, filters.noticieros_ids])
+  }, [filters.categoria, filters.urgencia, filters.tipo_fuente, filters.nivel_geografico, filters.fecha_desde, filters.fecha_hasta, filters.busqueda, filters.noticieros_ids, filters.userProvincia, filters.userCiudad])
 
   useEffect(() => {
     fetchNoticias()
@@ -183,6 +205,7 @@ export function useUsuario() {
       password_hash: '',
       cargo: 'Diputada Nacional',
       provincia: 'Buenos Aires',
+      ciudad: 'La Plata',
       activo: true,
       created_at: new Date().toISOString()
     })

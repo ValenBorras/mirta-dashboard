@@ -45,3 +45,19 @@ export function truncateText(text: string, maxLength: number) {
   if (text.length <= maxLength) return text
   return text.slice(0, maxLength).trim() + '...'
 }
+
+/**
+ * Construye una cadena de ubicación geográfica a partir de provincia y ciudad
+ */
+export function formatUbicacion(provincia: string | null, ciudad: string | null): string | null {
+  if (ciudad && provincia) {
+    return `${ciudad}, ${provincia}`
+  }
+  if (provincia) {
+    return provincia
+  }
+  if (ciudad) {
+    return ciudad
+  }
+  return null
+}

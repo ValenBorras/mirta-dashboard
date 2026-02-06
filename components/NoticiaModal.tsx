@@ -1,7 +1,7 @@
 'use client'
 
-import { X, ExternalLink, Clock, MapPin, User, Radio, Bookmark, Share2, Tag, AlertCircle, Newspaper } from 'lucide-react'
-import { formatDate, formatTime } from '@/lib/utils'
+import { X, ExternalLink, Clock, MapPin, User, Radio, Bookmark, Share2, Tag, Newspaper } from 'lucide-react'
+import { formatDate, formatTime, formatUbicacion } from '@/lib/utils'
 import { CATEGORIA_COLORS, URGENCIA_COLORS, NoticiaConRelaciones } from '@/types/database'
 
 interface NoticiaModalProps {
@@ -32,13 +32,6 @@ export function NoticiaModal({ noticia, onClose }: NoticiaModalProps) {
               >
                 {noticia.urgencia.toUpperCase()}
               </span>
-              {noticia.requiere_accion && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] sm:text-xs font-medium rounded-full bg-amber-100 text-amber-700">
-                  <AlertCircle className="w-3 h-3" />
-                  <span className="hidden sm:inline">Requiere Acción</span>
-                  <span className="sm:hidden">Acción</span>
-                </span>
-              )}
               {noticia.tipo_fuente === 'agente' && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] sm:text-xs font-medium rounded-full bg-blue-100 text-blue-700">
                   <Radio className="w-3 h-3" />
@@ -84,10 +77,10 @@ export function NoticiaModal({ noticia, onClose }: NoticiaModalProps) {
             <span className="hidden sm:inline">{formatDate(noticia.fecha_publicacion)} • {formatTime(noticia.fecha_publicacion)}</span>
             <span className="sm:hidden">{formatDate(noticia.fecha_publicacion)}</span>
           </span>
-          {noticia.ubicacion_geografica && (
+          {formatUbicacion(noticia.provincia, noticia.ciudad) && (
             <span className="flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="truncate max-w-[80px] sm:max-w-none">{noticia.ubicacion_geografica}</span>
+              <span className="truncate max-w-[80px] sm:max-w-none">{formatUbicacion(noticia.provincia, noticia.ciudad)}</span>
             </span>
           )}
         </div>
@@ -140,19 +133,6 @@ export function NoticiaModal({ noticia, onClose }: NoticiaModalProps) {
               }`}>
                 {noticia.sentimiento.charAt(0).toUpperCase() + noticia.sentimiento.slice(1)}
               </span>
-            </div>
-          )}
-
-          {/* Impacto Legislativo */}
-          {noticia.impacto_legislativo && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" />
-                Impacto Legislativo
-              </h3>
-              <p className="text-xs sm:text-sm text-gray-700 bg-amber-50 p-3 rounded-lg border border-amber-100">
-                {noticia.impacto_legislativo}
-              </p>
             </div>
           )}
         </div>

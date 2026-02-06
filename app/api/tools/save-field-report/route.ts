@@ -14,11 +14,10 @@ interface FieldReportData {
   cuerpo?: string;
   categoria: string;
   urgencia?: 'alta' | 'media' | 'baja';
-  ubicacion_geografica: string;
+  provincia: string;
+  ciudad: string;
   fecha_evento: string;
   palabras_clave?: string[];
-  impacto_legislativo?: string;
-  requiere_accion?: boolean;
   agente_id: number;
 }
 
@@ -30,7 +29,7 @@ export async function POST(request: NextRequest) {
     console.log('📋 Data received:', JSON.stringify(body, null, 2));
 
     // Validar campos obligatorios
-    const requiredFields = ['titulo', 'descripcion', 'categoria', 'ubicacion_geografica', 'fecha_evento', 'agente_id'];
+    const requiredFields = ['titulo', 'descripcion', 'categoria', 'provincia', 'ciudad', 'fecha_evento', 'agente_id'];
     const missingFields = requiredFields.filter(field => !body[field as keyof FieldReportData]);
     
     if (missingFields.length > 0) {
@@ -72,10 +71,10 @@ export async function POST(request: NextRequest) {
       categoria: body.categoria,
       urgencia: body.urgencia || 'media',
       sentimiento: 'neutral' as const,
-      ubicacion_geografica: body.ubicacion_geografica,
+      nivel_geografico: 'municipal' as const,
+      provincia: body.provincia,
+      ciudad: body.ciudad,
       palabras_clave: body.palabras_clave || [],
-      impacto_legislativo: body.impacto_legislativo || null,
-      requiere_accion: body.requiere_accion || false,
       procesado_llm: true, // Ya fue procesado por el agente AI
       tipo_fuente: 'agente' as const,
       noticiero_id: null,
