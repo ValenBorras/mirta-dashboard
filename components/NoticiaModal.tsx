@@ -11,9 +11,9 @@ interface NoticiaModalProps {
 }
 
 export function NoticiaModal({ noticia, onClose }: NoticiaModalProps) {
-  if (!noticia) return null
+  const [tab, setTab] = useState<'resumen' | 'completo'>(noticia && noticia.resumen ? 'resumen' : 'completo')
 
-  const [tab, setTab] = useState<'resumen' | 'completo'>(noticia.resumen ? 'resumen' : 'completo')
+  if (!noticia) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
