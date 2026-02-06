@@ -48,10 +48,14 @@ export function useNoticias(filters: Filters = {}) {
         query = query.eq('tipo_fuente', filters.tipo_fuente)
       }
       if (filters.fecha_desde) {
-        query = query.gte('fecha_publicacion', filters.fecha_desde)
+        // Agregar hora inicio del día (00:00:00) para el filtro desde
+        const fechaDesdeCompleta = `${filters.fecha_desde}T00:00:00.000Z`
+        query = query.gte('fecha_publicacion', fechaDesdeCompleta)
       }
       if (filters.fecha_hasta) {
-        query = query.lte('fecha_publicacion', filters.fecha_hasta)
+        // Agregar hora fin del día (23:59:59) para el filtro hasta
+        const fechaHastaCompleta = `${filters.fecha_hasta}T23:59:59.999Z`
+        query = query.lte('fecha_publicacion', fechaHastaCompleta)
       }
       if (filters.busqueda) {
         query = query.or(`titulo.ilike.%${filters.busqueda}%,descripcion.ilike.%${filters.busqueda}%`)

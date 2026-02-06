@@ -35,6 +35,7 @@ interface NewsFeedProps {
   selectedNoticierosIds?: number[]
   userProvincia?: string | null
   userCiudad?: string | null
+  defaultFechaDesde?: string
 }
 
 export function NewsFeed({ 
@@ -46,13 +47,14 @@ export function NewsFeed({
   noticierosLoading,
   selectedNoticierosIds = [],
   userProvincia,
-  userCiudad
+  userCiudad,
+  defaultFechaDesde = ''
 }: NewsFeedProps) {
   const [showFilters, setShowFilters] = useState(false)
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('')
   const [urgenciaFiltro, setUrgenciaFiltro] = useState<string>('')
   const [nivelGeograficoFiltro, setNivelGeograficoFiltro] = useState<string>('')
-  const [fechaDesdeFiltro, setFechaDesdeFiltro] = useState<string>('')
+  const [fechaDesdeFiltro, setFechaDesdeFiltro] = useState<string>(defaultFechaDesde)
   const [fechaHastaFiltro, setFechaHastaFiltro] = useState<string>('')
   const [noticierosSeleccionados, setNoticierosSeleccionados] = useState<number[]>(selectedNoticierosIds)
 

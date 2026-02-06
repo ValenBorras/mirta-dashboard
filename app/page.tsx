@@ -22,6 +22,10 @@ import {
 
 export default function Dashboard() {
   const { data: session } = useSession()
+  
+  // Obtener fecha de hoy en formato YYYY-MM-DD
+  const hoy = new Date().toISOString().split('T')[0]
+  
   const [filters, setFilters] = useState<{
     categoria?: string
     urgencia?: 'alta' | 'media' | 'baja'
@@ -30,7 +34,9 @@ export default function Dashboard() {
     fecha_desde?: string
     fecha_hasta?: string
     noticieros_ids?: number[]
-  }>({})
+  }>({
+    fecha_desde: hoy // Por defecto mostrar solo noticias de hoy
+  })
   const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null)
   const [showGestionAgentes, setShowGestionAgentes] = useState(false)
 
@@ -135,6 +141,7 @@ export default function Dashboard() {
               selectedNoticierosIds={filters.noticieros_ids || []}
               userProvincia={session?.user?.provincia}
               userCiudad={session?.user?.ciudad}
+              defaultFechaDesde={hoy}
             />
           </div>
 
