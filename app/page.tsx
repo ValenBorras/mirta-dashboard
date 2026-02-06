@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { Header } from '@/components/Header'
-import { KPICards } from '@/components/KPICards'
+// import { KPICards } from '@/components/KPICards'
 import { AlertasUrgentes } from '@/components/AlertasUrgentes'
 import { NewsFeed } from '@/components/NewsFeed'
 import { ReportesCampo } from '@/components/ReportesCampo'
@@ -13,7 +13,6 @@ import { NoticiaModal } from '@/components/NoticiaModal'
 import { GestionAgentes } from '@/components/GestionAgentes'
 import { 
   useNoticias, 
-  useNoticiasHoy, 
   useMencionesUsuario,
   useTendencias,
   useReportesCampo,
@@ -24,7 +23,7 @@ export default function Dashboard() {
   const { data: session } = useSession()
   
   // Obtener fecha de hoy en formato YYYY-MM-DD
-  const hoy = new Date().toISOString().split('T')[0]
+  const hoyStr = new Date().toISOString().split('T')[0]
   
   const [filters, setFilters] = useState<{
     categoria?: string
@@ -35,17 +34,18 @@ export default function Dashboard() {
     fecha_hasta?: string
     noticieros_ids?: number[]
   }>({
-    fecha_desde: hoy // Por defecto mostrar solo noticias de hoy
+    fecha_desde: hoyStr // Por defecto mostrar solo noticias de hoy
   })
   const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null)
   const [showGestionAgentes, setShowGestionAgentes] = useState(false)
 
-  const { stats, loading: loadingStats } = useNoticiasHoy()
   const { noticias, loading: loadingNoticias } = useNoticias({
     ...filters,
     userProvincia: session?.user?.provincia,
     userCiudad: session?.user?.ciudad
   })
+  // Calcular noticias de hoy de forma dinámica según el filtro actual
+  const noticiasHoy = noticias.filter(n => n.fecha_publicacion.startsWith(hoyStr))
   const { reportes: reportesCampo, loading: loadingReportes } = useReportesCampo()
   const { tendencias, loading: loadingTendencias } = useTendencias()
   const { noticieros, loading: loadingNoticieros } = useNoticieros()
@@ -110,14 +110,20 @@ export default function Dashboard() {
       <main className="max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
         {/* KPI Cards */}
         <section className="mb-4 sm:mb-6">
-          <KPICards
-            noticiasHoy={stats.hoy}
-            noticiasAyer={stats.ayer}
-            urgentes={stats.urgentes}
-            porRevisar={0}
-            reportesCampo={stats.reportesCampo}
-            loading={loadingStats}
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col justify-between">
+              <div className="text-xs font-medium text-gray-500 mb-1">Noticias de Hoy</div>
+              <div className="text-3xl font-bold text-gray-900">{noticiasHoy.length}</div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col justify-between">
+              <div className="text-xs font-medium text-gray-500 mb-1">Alertas Urgentes</div>
+              <div className="text-3xl font-bold text-gray-900">{noticiasUrgentes.length}</div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col justify-between">
+              <div className="text-xs font-medium text-gray-500 mb-1">Reportes de Campo</div>
+              <div className="text-3xl font-bold text-gray-900">{reportesCampo.length}</div>
+            </div>
+          </div>
         </section>
 
         {/* Alertas Urgentes */}
@@ -141,7 +147,7 @@ export default function Dashboard() {
               selectedNoticierosIds={filters.noticieros_ids || []}
               userProvincia={session?.user?.provincia}
               userCiudad={session?.user?.ciudad}
-              defaultFechaDesde={hoy}
+              defaultFechaDesde={hoyStr}
             />
           </div>
 

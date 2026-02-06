@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { X, ExternalLink, Clock, MapPin, User, Radio, Bookmark, Share2, Tag, Newspaper } from 'lucide-react'
 import { formatDate, formatTime, formatUbicacion } from '@/lib/utils'
 import { CATEGORIA_COLORS, URGENCIA_COLORS, NoticiaConRelaciones } from '@/types/database'
@@ -11,6 +12,8 @@ interface NoticiaModalProps {
 
 export function NoticiaModal({ noticia, onClose }: NoticiaModalProps) {
   if (!noticia) return null
+
+  const [tab, setTab] = useState<'resumen' | 'completo'>(noticia.resumen ? 'resumen' : 'completo')
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -85,21 +88,69 @@ export function NoticiaModal({ noticia, onClose }: NoticiaModalProps) {
           )}
         </div>
 
+        {/* Tabs */}
+        <div className="px-3 sm:px-4 pt-3">
+          <div className="flex items-center gap-2 border-b border-gray-200">
+            <button
+              onClick={() => setTab('resumen')}
+              className={`px-3 py-2 -mb-px text-sm font-medium rounded-t-lg ${tab === 'resumen' ? 'bg-white border border-b-0 border-gray-200 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              Resumen
+            </button>
+            <button
+              onClick={() => setTab('completo')}
+              className={`px-3 py-2 -mb-px text-sm font-medium rounded-t-lg ${tab === 'completo' ? 'bg-white border border-b-0 border-gray-200 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              Texto completo
+            </button>
+          </div>
+        </div>
+
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {noticia.descripcion && (
-            <div className="mb-4 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <h3 className="text-xs sm:text-sm font-semibold text-blue-800 mb-1">Descripción</h3>
-              <p className="text-sm sm:text-base text-blue-900">{noticia.descripcion}</p>
-            </div>
-          )}
+          {tab === 'resumen' ? (
+            <>
+              {noticia.resumen ? (
+                <div className="mb-4 p-3 sm:p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <h3 className="text-xs sm:text-sm font-semibold text-indigo-800 mb-1">Resumen</h3>
+                  <p className="text-sm sm:text-base text-indigo-900 whitespace-pre-wrap">{noticia.resumen}</p>
+                </div>
+              ) : (
+                <>
+                  {noticia.descripcion && (
+                    <div className="mb-4 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-100">
+                      <h3 className="text-xs sm:text-sm font-semibold text-blue-800 mb-1">Descripción</h3>
+                      <p className="text-sm sm:text-base text-blue-900">{noticia.descripcion}</p>
+                    </div>
+                  )}
 
-          {noticia.cuerpo && (
-            <div className="prose prose-sm max-w-none text-gray-700">
-              {noticia.cuerpo.split('\n').map((paragraph, i) => (
-                <p key={i} className="text-sm sm:text-base">{paragraph}</p>
-              ))}
-            </div>
+                  {noticia.cuerpo && (
+                    <div className="prose prose-sm max-w-none text-gray-700">
+                      {noticia.cuerpo.split('\n').map((paragraph, i) => (
+                        <p key={i} className="text-sm sm:text-base">{paragraph}</p>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {noticia.descripcion && (
+                <div className="mb-4 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <h3 className="text-xs sm:text-sm font-semibold text-blue-800 mb-1">Descripción</h3>
+                  <p className="text-sm sm:text-base text-blue-900">{noticia.descripcion}</p>
+                </div>
+              )}
+
+              {noticia.cuerpo && (
+                <div className="prose prose-sm max-w-none text-gray-700">
+                  {noticia.cuerpo.split('\n').map((paragraph, i) => (
+                    <p key={i} className="text-sm sm:text-base">{paragraph}</p>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           {/* Palabras clave */}

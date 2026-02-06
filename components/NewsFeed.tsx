@@ -11,7 +11,7 @@ import {
   Filter,
   ChevronDown,
   Newspaper,
-  Globe
+  
 } from 'lucide-react'
 import { formatRelativeTime, truncateText, formatUbicacion } from '@/lib/utils'
 import { CATEGORIA_COLORS, URGENCIA_COLORS, CATEGORIAS } from '@/types/database'
@@ -125,26 +125,53 @@ export function NewsFeed({
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 flex flex-col h-full">
-      {/* Header con filtros */}
-      <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900">Noticias</h2>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors ${
-            showFilters || filtrosActivos > 0
-              ? 'bg-blue-100 text-blue-700' 
-              : 'hover:bg-gray-100 text-gray-600'
-          }`}
-        >
-          <Filter className="w-4 h-4" />
-          <span>Filtros</span>
-          {filtrosActivos > 0 && (
-            <span className="px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-500 text-white">
-              {filtrosActivos}
-            </span>
-          )}
-          <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-        </button>
+      {/* Header con pestañas y filtros */}
+      <div className="flex items-start justify-between p-3 sm:p-4 border-b border-gray-200 flex-col sm:flex-row">
+        <div className="w-full sm:w-auto">
+          <div className="mt-1 sm:mt-0 flex items-center gap-2">
+            {[
+              { value: '', label: 'Todas' },
+              { value: 'nacional', label: 'Nacional' },
+              { value: 'provincial', label: userProvincia ? `Provincial (${userProvincia})` : 'Provincial', disabled: !userProvincia },
+              { value: 'municipal', label: userCiudad ? `Municipal (${userCiudad})` : 'Municipal', disabled: !userCiudad }
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => !opt.disabled && handleFilterChange('nivel_geografico', opt.value)}
+                disabled={opt.disabled}
+                className={`px-3 py-1.5 text-sm rounded-t-lg transition-all ${
+                  nivelGeograficoFiltro === opt.value
+                    ? 'text-blue-700 border-b-2 border-blue-500'
+                    : opt.disabled
+                      ? 'text-gray-300 cursor-not-allowed'
+                      : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-3 sm:mt-0">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors ${
+              showFilters || filtrosActivos > 0
+                ? 'bg-blue-100 text-blue-700'
+                : 'hover:bg-gray-100 text-gray-600'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            <span>Filtros</span>
+            {filtrosActivos > 0 && (
+              <span className="px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-500 text-white">
+                {filtrosActivos}
+              </span>
+            )}
+            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
       </div>
 
       {/* Panel de filtros expandible */}
@@ -198,46 +225,7 @@ export function NewsFeed({
             </div>
           </div>
 
-          {/* Filtros de alcance geográfico */}
-          <div>
-            <div className="flex items-center gap-1 mb-2">
-              <Globe className="w-3.5 h-3.5 text-gray-500" />
-              <label className="text-xs font-medium text-gray-500">Alcance geográfico</label>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { value: '', label: 'Todos' },
-                { value: 'internacional', label: 'Internacional' },
-                { value: 'nacional', label: 'Nacional' },
-                { value: 'provincial', label: userProvincia ? `Provincial (${userProvincia})` : 'Provincial', disabled: !userProvincia },
-                { value: 'municipal', label: userCiudad ? `Municipal (${userCiudad})` : 'Municipal', disabled: !userCiudad }
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => !option.disabled && handleFilterChange('nivel_geografico', option.value)}
-                  disabled={option.disabled}
-                  className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all ${
-                    nivelGeograficoFiltro === option.value
-                      ? 'bg-blue-100 border border-blue-300 text-blue-700 font-medium'
-                      : option.disabled
-                        ? 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-            {(!userProvincia || !userCiudad) && (
-              <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                <span>💡</span>
-                {!userProvincia 
-                  ? 'Configura tu provincia en tu perfil para filtrar noticias provinciales'
-                  : 'Configura tu ciudad en tu perfil para filtrar noticias municipales'
-                }
-              </p>
-            )}
-          </div>
+          {/* (Alcance geográfico movido arriba como pestañas) */}
 
           {/* Selector de noticieros */}
           <div>
