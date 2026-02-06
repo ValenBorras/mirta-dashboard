@@ -154,32 +154,33 @@ export function GestionAgentes({ onClose }: GestionAgentesProps) {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
               {onClose && (
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
               )}
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <Users className="w-7 h-7 text-blue-600" />
-                  Gestión de Agentes de Campo
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 sm:w-7 sm:h-7 text-blue-600 flex-shrink-0" />
+                  <span className="truncate">Agentes</span>
+                  <span className="hidden sm:inline truncate">de Campo</span>
                 </h1>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 hidden sm:block">
                   Administra los agentes que envían reportes vía WhatsApp
                 </p>
               </div>
             </div>
             <button
               onClick={handleCreate}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex-shrink-0"
             >
               <Plus className="w-5 h-5" />
-              Nuevo Agente
+              <span className="hidden sm:inline">Nuevo Agente</span>
             </button>
           </div>
         </div>
@@ -187,85 +188,85 @@ export function GestionAgentes({ onClose }: GestionAgentesProps) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="w-5 h-5 text-blue-600" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+          <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{estadisticas.total}</p>
-                <p className="text-xs text-gray-500">Total Agentes</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.total}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">Total</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <UserCheck className="w-5 h-5 text-green-600" />
+          <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg">
+                <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{estadisticas.activos}</p>
-                <p className="text-xs text-gray-500">Activos</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.activos}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">Activos</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <UserX className="w-5 h-5 text-gray-600" />
+          <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-gray-100 rounded-lg">
+                <UserX className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{estadisticas.inactivos}</p>
-                <p className="text-xs text-gray-500">Inactivos</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.inactivos}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">Inactivos</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <FileText className="w-5 h-5 text-purple-600" />
+          <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg">
+                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{estadisticas.totalNoticias}</p>
-                <p className="text-xs text-gray-500">Reportes Totales</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.totalNoticias}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">Reportes</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <TrendingUp className="w-5 h-5 text-orange-600" />
+          <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 col-span-2 sm:col-span-1">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-orange-100 rounded-lg">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{estadisticas.noticiasUltimoMes}</p>
-                <p className="text-xs text-gray-500">Último Mes</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.noticiasUltimoMes}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">Último Mes</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 mb-6">
+          <div className="flex flex-col gap-3">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar por nombre, teléfono, provincia..."
+                placeholder="Buscar agentes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-1">
               <button
                 onClick={() => setFilterActivo('all')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-colors text-sm whitespace-nowrap ${
                   filterActivo === 'all'
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -275,7 +276,7 @@ export function GestionAgentes({ onClose }: GestionAgentesProps) {
               </button>
               <button
                 onClick={() => setFilterActivo('active')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-colors text-sm whitespace-nowrap ${
                   filterActivo === 'active'
                     ? 'bg-green-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -285,7 +286,7 @@ export function GestionAgentes({ onClose }: GestionAgentesProps) {
               </button>
               <button
                 onClick={() => setFilterActivo('inactive')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-colors text-sm whitespace-nowrap ${
                   filterActivo === 'inactive'
                     ? 'bg-gray-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -348,81 +349,28 @@ export function GestionAgentes({ onClose }: GestionAgentesProps) {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Agente
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Contacto
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ubicación
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Reportes
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Estado
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredAgentes.map((agente) => (
-                    <tr key={agente.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium ${
-                            agente.activo ? 'bg-blue-600' : 'bg-gray-400'
-                          }`}>
-                            {agente.nombre.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{agente.nombre}</p>
-                            <p className="text-xs text-gray-500">
-                              Desde {new Date(agente.created_at).toLocaleDateString()}
-                            </p>
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-gray-200">
+                {filteredAgentes.map((agente) => (
+                  <div key={agente.id} className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0 ${
+                          agente.activo ? 'bg-blue-600' : 'bg-gray-400'
+                        }`}>
+                          {agente.nombre.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{agente.nombre}</p>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <Phone className="w-3 h-3" />
+                            <span className="truncate">{agente.telefono}</span>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Phone className="w-4 h-4" />
-                          {agente.telefono}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <MapPin className="w-4 h-4" />
-                          <span>
-                            {agente.ciudad && `${agente.ciudad}, `}
-                            {agente.provincia || 'Sin ubicación'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg font-semibold text-gray-900">
-                              {agente.stats?.totalNoticias || 0}
-                            </span>
-                            <span className="text-xs text-gray-500">total</span>
-                          </div>
-                          {agente.stats?.ultimaNoticia && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <Calendar className="w-3 h-3" />
-                              Último: {formatRelativeTime(agente.stats.ultimaNoticia)}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                           agente.activo
                             ? 'bg-green-100 text-green-700'
                             : 'bg-gray-100 text-gray-600'
@@ -432,21 +380,18 @@ export function GestionAgentes({ onClose }: GestionAgentesProps) {
                           }`} />
                           {agente.activo ? 'Activo' : 'Inactivo'}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="relative">
                           <button
                             onClick={() => setOpenMenu(openMenu === agente.id ? null : agente.id)}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                           >
-                            <MoreVertical className="w-5 h-5 text-gray-500" />
+                            <MoreVertical className="w-4 h-4 text-gray-500" />
                           </button>
-
                           {openMenu === agente.id && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                            <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
                               <button
                                 onClick={() => handleEdit(agente)}
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                               >
                                 <Edit2 className="w-4 h-4" />
                                 Editar
@@ -454,7 +399,7 @@ export function GestionAgentes({ onClose }: GestionAgentesProps) {
                               <button
                                 onClick={() => handleToggleActivo(agente.id, agente.activo)}
                                 disabled={actionLoading}
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                               >
                                 <Power className="w-4 h-4" />
                                 {agente.activo ? 'Desactivar' : 'Activar'}
@@ -465,7 +410,7 @@ export function GestionAgentes({ onClose }: GestionAgentesProps) {
                                   setShowDeleteConfirm(agente.id)
                                   setOpenMenu(null)
                                 }}
-                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                               >
                                 <Trash2 className="w-4 h-4" />
                                 Eliminar
@@ -473,12 +418,161 @@ export function GestionAgentes({ onClose }: GestionAgentesProps) {
                             </div>
                           )}
                         </div>
-                      </td>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        <span>{agente.ciudad && `${agente.ciudad}, `}{agente.provincia || 'Sin ubicación'}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <FileText className="w-3 h-3" />
+                        <span>{agente.stats?.totalNoticias || 0} reportes</span>
+                      </div>
+                      {agente.stats?.ultimaNoticia && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>{formatRelativeTime(agente.stats.ultimaNoticia)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Agente
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contacto
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ubicación
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Reportes
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Estado
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acciones
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredAgentes.map((agente) => (
+                      <tr key={agente.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium ${
+                              agente.activo ? 'bg-blue-600' : 'bg-gray-400'
+                            }`}>
+                              {agente.nombre.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{agente.nombre}</p>
+                              <p className="text-xs text-gray-500">
+                                Desde {new Date(agente.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Phone className="w-4 h-4" />
+                            {agente.telefono}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <MapPin className="w-4 h-4" />
+                            <span>
+                              {agente.ciudad && `${agente.ciudad}, `}
+                              {agente.provincia || 'Sin ubicación'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-semibold text-gray-900">
+                                {agente.stats?.totalNoticias || 0}
+                              </span>
+                              <span className="text-xs text-gray-500">total</span>
+                            </div>
+                            {agente.stats?.ultimaNoticia && (
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Calendar className="w-3 h-3" />
+                                Último: {formatRelativeTime(agente.stats.ultimaNoticia)}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
+                            agente.activo
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              agente.activo ? 'bg-green-500' : 'bg-gray-400'
+                            }`} />
+                            {agente.activo ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="relative">
+                            <button
+                              onClick={() => setOpenMenu(openMenu === agente.id ? null : agente.id)}
+                              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                              <MoreVertical className="w-5 h-5 text-gray-500" />
+                            </button>
+
+                            {openMenu === agente.id && (
+                              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                                <button
+                                  onClick={() => handleEdit(agente)}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                  Editar
+                                </button>
+                                <button
+                                  onClick={() => handleToggleActivo(agente.id, agente.activo)}
+                                  disabled={actionLoading}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                >
+                                  <Power className="w-4 h-4" />
+                                  {agente.activo ? 'Desactivar' : 'Activar'}
+                                </button>
+                                <hr className="my-1" />
+                                <button
+                                  onClick={() => {
+                                    setShowDeleteConfirm(agente.id)
+                                    setOpenMenu(null)
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Eliminar
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 

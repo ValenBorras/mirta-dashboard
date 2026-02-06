@@ -6,6 +6,25 @@ const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 }
 
+/**
+ * Convierte una fecha a timestamp UTC
+ * Las fechas de los feeds RSS generalmente ya vienen en UTC
+ * Solo se convierte al formato ISO estándar
+ */
+function toArgentinaTimestamp(dateStr: string): string {
+  if (!dateStr) {
+    return new Date().toISOString()
+  }
+  
+  const date = new Date(dateStr.trim())
+  
+  if (isNaN(date.getTime())) {
+    return new Date().toISOString()
+  }
+  
+  return date.toISOString()
+}
+
 // Sitios de noticias a scrapear
 const SITES = [
   'https://www.clarin.com/',
@@ -115,12 +134,7 @@ async function extractJsonLd(url: string): Promise<NoticiaExtraida | null> {
 
           // Obtener fecha de publicación
           const fechaRaw = article.datePublished as string
-          let fechaPublicacion: string
-          try {
-            fechaPublicacion = new Date(fechaRaw).toISOString()
-          } catch {
-            fechaPublicacion = new Date().toISOString()
-          }
+          const fechaPublicacion = toArgentinaTimestamp(fechaRaw)
 
           // Obtener nombre de la fuente
           const publisher = article.publisher as Record<string, unknown> | undefined

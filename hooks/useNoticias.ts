@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Usuario, NoticiaConRelaciones } from '@/types/database'
+import type { Usuario, NoticiaConRelaciones, Noticiero } from '@/types/database'
 
 interface Filters {
   categoria?: string
@@ -11,6 +11,7 @@ interface Filters {
   fecha_desde?: string
   fecha_hasta?: string
   busqueda?: string
+  noticieros_ids?: number[]
 }
 
 export function useNoticias(filters: Filters = {}) {
@@ -30,6 +31,7 @@ export function useNoticias(filters: Filters = {}) {
           noticiero:noticiero_id(nombre),
           agente:agente_id(nombre, provincia)
         `)
+        .eq('procesado_llm', true)
         .order('fecha_publicacion', { ascending: false })
 
       if (filters.categoria) {
@@ -50,6 +52,9 @@ export function useNoticias(filters: Filters = {}) {
       if (filters.busqueda) {
         query = query.or(`titulo.ilike.%${filters.busqueda}%,descripcion.ilike.%${filters.busqueda}%`)
       }
+      if (filters.noticieros_ids && filters.noticieros_ids.length > 0) {
+        query = query.in('noticiero_id', filters.noticieros_ids)
+      }
 
       const { data, error: fetchError } = await query.limit(50)
 
@@ -60,7 +65,7 @@ export function useNoticias(filters: Filters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [filters.categoria, filters.urgencia, filters.tipo_fuente, filters.fecha_desde, filters.fecha_hasta, filters.busqueda])
+  }, [filters.categoria, filters.urgencia, filters.tipo_fuente, filters.fecha_desde, filters.fecha_hasta, filters.busqueda, filters.noticieros_ids])
 
   useEffect(() => {
     fetchNoticias()
@@ -278,4 +283,34 @@ export function useTendencias() {
   }, [])
 
   return { tendencias, loading }
+}
+
+export function useNoticieros() {
+  const [noticieros, setNoticieros] = useState<Noticiero[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchNoticieros() {
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('noticiero')
+          .select('*')
+          .eq('activo', true)
+          .order('nombre', { ascending: true })
+
+        if (fetchError) throw fetchError
+        setNoticieros((data as Noticiero[]) || [])
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error al cargar noticieros')
+        console.error('Error fetching noticieros:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchNoticieros()
+  }, [])
+
+  return { noticieros, loading, error }
 }

@@ -16,7 +16,8 @@ import {
   useNoticiasHoy, 
   useMencionesUsuario,
   useTendencias,
-  useReportesCampo
+  useReportesCampo,
+  useNoticieros
 } from '@/hooks/useNoticias'
 
 export default function Dashboard() {
@@ -25,14 +26,19 @@ export default function Dashboard() {
     categoria?: string
     urgencia?: 'alta' | 'media' | 'baja'
     busqueda?: string
+    nivel_geografico?: 'internacional' | 'nacional' | 'provincial' | 'municipal'
+    fecha_desde?: string
+    fecha_hasta?: string
+    noticieros_ids?: number[]
   }>({})
   const [selectedNoticiaId, setSelectedNoticiaId] = useState<number | null>(null)
   const [showGestionAgentes, setShowGestionAgentes] = useState(false)
 
-  const { stats, loading: loadingStats, refetch: refetchStats } = useNoticiasHoy()
-  const { noticias, loading: loadingNoticias, refetch: refetchNoticias } = useNoticias(filters)
+  const { stats, loading: loadingStats } = useNoticiasHoy()
+  const { noticias, loading: loadingNoticias } = useNoticias(filters)
   const { reportes: reportesCampo, loading: loadingReportes } = useReportesCampo()
   const { tendencias, loading: loadingTendencias } = useTendencias()
+  const { noticieros, loading: loadingNoticieros } = useNoticieros()
   const { menciones, count: mencionesCount, loading: loadingMenciones } = useMencionesUsuario(
     session?.user?.name || ''
   )
@@ -43,10 +49,12 @@ export default function Dashboard() {
     [noticias]
   )
 
-  // Noticia seleccionada para el modal
+  // Noticia seleccionada para el modal (buscar en noticias y reportes de campo)
   const selectedNoticia = useMemo(() => 
-    noticias.find(n => n.id === selectedNoticiaId) || null,
-    [noticias, selectedNoticiaId]
+    noticias.find(n => n.id === selectedNoticiaId) || 
+    reportesCampo.find(r => r.id === selectedNoticiaId) || 
+    null,
+    [noticias, reportesCampo, selectedNoticiaId]
   )
 
   const handleSearch = useCallback((query: string) => {
@@ -55,23 +63,26 @@ export default function Dashboard() {
 
   const handleFilterChange = useCallback((newFilters: { 
     categoria?: string
-    urgencia?: string 
+    urgencia?: string
+    nivel_geografico?: 'internacional' | 'nacional' | 'provincial' | 'municipal'
+    fecha_desde?: string
+    fecha_hasta?: string
+    noticieros_ids?: number[]
   }) => {
     setFilters(prev => ({
       ...prev,
       categoria: newFilters.categoria || undefined,
-      urgencia: (newFilters.urgencia as 'alta' | 'media' | 'baja') || undefined
+      urgencia: (newFilters.urgencia as 'alta' | 'media' | 'baja') || undefined,
+      nivel_geografico: newFilters.nivel_geografico || undefined,
+      fecha_desde: newFilters.fecha_desde || undefined,
+      fecha_hasta: newFilters.fecha_hasta || undefined,
+      noticieros_ids: newFilters.noticieros_ids || undefined
     }))
   }, [])
 
   const handleTendenciaClick = useCallback((palabra: string) => {
     setFilters(prev => ({ ...prev, busqueda: palabra }))
   }, [])
-
-  const handleScraperComplete = useCallback(() => {
-    refetchNoticias()
-    refetchStats()
-  }, [refetchNoticias, refetchStats])
 
   // Si se muestra la gestión de agentes, renderizar ese componente
   if (showGestionAgentes) {
@@ -83,13 +94,12 @@ export default function Dashboard() {
       <Header 
         onSearch={handleSearch}
         mencionesCount={mencionesCount}
-        onRefresh={handleScraperComplete}
         onGestionAgentes={() => setShowGestionAgentes(true)}
       />
 
-      <main className="max-w-[1920px] mx-auto px-4 sm:px-6 py-6">
+      <main className="max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
         {/* KPI Cards */}
-        <section className="mb-6">
+        <section className="mb-4 sm:mb-6">
           <KPICards
             noticiasHoy={stats.hoy}
             noticiasAyer={stats.ayer}
@@ -108,19 +118,22 @@ export default function Dashboard() {
         />
 
         {/* Layout principal: 2 columnas */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Columna izquierda: Feed principal */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 min-h-[400px] sm:min-h-[600px]">
             <NewsFeed
               noticias={noticias}
               loading={loadingNoticias}
               onNoticiaClick={setSelectedNoticiaId}
               onFilterChange={handleFilterChange}
+              noticieros={noticieros}
+              noticierosLoading={loadingNoticieros}
+              selectedNoticierosIds={filters.noticieros_ids || []}
             />
           </div>
 
           {/* Columna derecha: Reportes, Menciones y Tendencias */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Menciones del usuario */}
             {mencionesCount > 0 && (
               <MencionesUsuario

@@ -33,18 +33,18 @@ export function Tendencias({ tendencias, loading, onTendenciaClick }: Tendencias
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
-      <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <TrendingUp className="w-5 h-5 text-green-600" />
+    <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+      <h2 className="font-semibold text-sm sm:text-base text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+        <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
         Tendencias del Día
       </h2>
 
       {tendencias.length === 0 ? (
-        <p className="text-sm text-gray-500 text-center py-4">
+        <p className="text-xs sm:text-sm text-gray-500 text-center py-3 sm:py-4">
           No hay tendencias disponibles
         </p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5 sm:space-y-3">
           {tendencias.map((tendencia) => {
             const percentage = (tendencia.count / maxCount) * 100
 
@@ -55,13 +55,13 @@ export function Tendencias({ tendencias, loading, onTendenciaClick }: Tendencias
                 className="w-full text-left group"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="flex items-center gap-1.5 text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
-                    <Hash className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
+                    <Hash className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400" />
                     {tendencia.palabra}
                   </span>
-                  <span className="text-xs text-gray-500">{tendencia.count}</span>
+                  <span className="text-[10px] sm:text-xs text-gray-500">{tendencia.count}</span>
                 </div>
-                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="w-full h-1.5 sm:h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-500 group-hover:from-blue-500 group-hover:to-blue-700"
                     style={{ width: `${percentage}%` }}

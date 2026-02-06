@@ -89,6 +89,16 @@ body {
   animation: fade-in 0.3s ease-out;
 }
 
+/* Hide scrollbar for horizontal scroll tabs */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Skeleton loading */
 @keyframes shimmer {
   0% {
@@ -105,6 +115,18 @@ body {
   animation: shimmer 1.5s infinite;
 }
 
+/* Touch-friendly tap targets for mobile */
+@media (max-width: 640px) {
+  button, a, input, select {
+    min-height: 44px;
+  }
+  
+  /* Smaller tap targets for badges and inline buttons */
+  .badge, [class*="py-0.5"] {
+    min-height: auto;
+  }
+}
+
 /* Focus states */
 button:focus-visible,
 a:focus-visible,
@@ -112,4 +134,11 @@ input:focus-visible,
 select:focus-visible {
   outline: 2px solid #3B82F6;
   outline-offset: 2px;
+}
+
+/* Safe area insets for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

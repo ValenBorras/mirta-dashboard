@@ -23,15 +23,15 @@ interface AlertasUrgentesProps {
 export function AlertasUrgentes({ noticias, loading, onNoticiaClick }: AlertasUrgentesProps) {
   if (loading) {
     return (
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-red-500" />
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
           Alertas Urgentes
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl p-4 border-2 border-red-200 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
+            <div key={i} className="bg-white rounded-xl p-3 sm:p-4 border-2 border-red-200 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 sm:mb-3" />
               <div className="h-3 bg-gray-200 rounded w-full mb-2" />
               <div className="h-3 bg-gray-200 rounded w-2/3" />
             </div>
@@ -46,17 +46,17 @@ export function AlertasUrgentes({ noticias, loading, onNoticiaClick }: AlertasUr
   }
 
   return (
-    <div className="mb-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-        <AlertTriangle className="w-5 h-5 text-red-500" />
+    <div className="mb-4 sm:mb-6">
+      <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center gap-2">
+        <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
         Alertas Urgentes
         <span className="text-sm font-normal text-gray-500">({noticias.length})</span>
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {noticias.slice(0, 3).map((noticia) => (
           <div 
             key={noticia.id}
-            className="bg-white rounded-xl p-4 border-2 border-red-200 hover:border-red-400 hover:shadow-lg transition-all cursor-pointer group"
+            className="bg-white rounded-xl p-3 sm:p-4 border-2 border-red-200 hover:border-red-400 hover:shadow-lg transition-all cursor-pointer group"
             onClick={() => onNoticiaClick?.(noticia.id)}
           >
             <div className="flex items-start justify-between gap-2 mb-2">
@@ -73,22 +73,22 @@ export function AlertasUrgentes({ noticias, loading, onNoticiaClick }: AlertasUr
               )}
             </div>
             
-            <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-red-600 transition-colors line-clamp-2">
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-2 group-hover:text-red-600 transition-colors line-clamp-2">
               {noticia.titulo}
             </h3>
             
             {noticia.descripcion && (
-              <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+              <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2">
                 {truncateText(noticia.descripcion, 120)}
               </p>
             )}
             
             <div className="flex items-center justify-between text-xs text-gray-500">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {noticia.ubicacion_geografica && (
                   <span className="flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
-                    {noticia.ubicacion_geografica}
+                    <span className="truncate max-w-[100px]">{noticia.ubicacion_geografica}</span>
                   </span>
                 )}
                 <span className="flex items-center gap-1">

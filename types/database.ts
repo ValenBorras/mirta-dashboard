@@ -44,6 +44,7 @@ export interface Noticia {
   urgencia: 'alta' | 'media' | 'baja'
   sentimiento: 'positivo' | 'neutral' | 'negativo' | null
   ubicacion_geografica: string | null
+  nivel_geografico: 'internacional' | 'nacional' | 'provincial' | 'municipal' | null
   palabras_clave: string[] | null
   impacto_legislativo: string | null
   requiere_accion: boolean

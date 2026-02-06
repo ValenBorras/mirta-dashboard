@@ -1,5 +1,8 @@
 import { type ClassValue, clsx } from 'clsx'
 
+// Zona horaria de Argentina
+const TIMEZONE = 'America/Argentina/Buenos_Aires'
+
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs)
 }
@@ -9,6 +12,7 @@ export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOpt
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+    timeZone: TIMEZONE,
     ...options
   })
 }
@@ -16,12 +20,14 @@ export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOpt
 export function formatTime(date: string | Date) {
   return new Date(date).toLocaleTimeString('es-AR', {
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    timeZone: TIMEZONE
   })
 }
 
 export function formatRelativeTime(date: string | Date) {
   const now = new Date()
+  // Convertir la fecha a la zona horaria de Argentina para comparación
   const past = new Date(date)
   const diffMs = now.getTime() - past.getTime()
   const diffMins = Math.floor(diffMs / 60000)

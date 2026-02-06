@@ -58,11 +58,11 @@ export function KPICards({
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white rounded-xl p-4 border border-gray-200 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-24 mb-3" />
-            <div className="h-8 bg-gray-200 rounded w-16" />
+          <div key={i} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 animate-pulse">
+            <div className="h-3 sm:h-4 bg-gray-200 rounded w-20 sm:w-24 mb-2 sm:mb-3" />
+            <div className="h-6 sm:h-8 bg-gray-200 rounded w-12 sm:w-16" />
           </div>
         ))}
       </div>
@@ -70,32 +70,33 @@ export function KPICards({
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
       {cards.map((card) => (
         <div 
           key={card.title}
-          className={`bg-white rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow ${
+          className={`bg-white rounded-xl p-3 sm:p-4 border border-gray-200 hover:shadow-md transition-shadow ${
             card.highlight ? 'ring-2 ring-red-500 ring-opacity-50' : ''
           }`}
         >
           <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500 font-medium">{card.title}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{card.value}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-gray-500 font-medium truncate">{card.title}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-0.5 sm:mt-1">{card.value}</p>
               {card.trend && (
-                <div className={`flex items-center gap-1 mt-1 text-sm ${
+                <div className={`flex items-center gap-1 mt-0.5 sm:mt-1 text-xs ${
                   card.trend === 'up' ? 'text-green-600' : 
                   card.trend === 'down' ? 'text-red-600' : 'text-gray-500'
                 }`}>
-                  {card.trend === 'up' && <TrendingUp className="w-4 h-4" />}
-                  {card.trend === 'down' && <TrendingDown className="w-4 h-4" />}
-                  {card.trend === 'neutral' && <Minus className="w-4 h-4" />}
-                  <span>{card.trendValue} vs ayer</span>
+                  {card.trend === 'up' && <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />}
+                  {card.trend === 'down' && <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />}
+                  {card.trend === 'neutral' && <Minus className="w-3 h-3 sm:w-4 sm:h-4" />}
+                  <span className="hidden sm:inline">{card.trendValue} vs ayer</span>
+                  <span className="sm:hidden">{diff > 0 ? '+' : ''}{diff}</span>
                 </div>
               )}
             </div>
-            <div className={`p-2 rounded-lg ${card.bgColor}`}>
-              <card.icon className={`w-5 h-5 ${card.color.replace('bg-', 'text-')}`} />
+            <div className={`p-1.5 sm:p-2 rounded-lg ${card.bgColor} flex-shrink-0 ml-2`}>
+              <card.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${card.color.replace('bg-', 'text-')}`} />
             </div>
           </div>
         </div>

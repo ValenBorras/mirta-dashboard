@@ -2,24 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
-import { Search, Bell, Settings, Menu, User, Users, LogOut } from 'lucide-react'
-import { ScraperButton } from './ScraperButton'
-// import { AIProcessButton } from './AIProcessButton'
+import { Search, Menu, User, Users, LogOut, X } from 'lucide-react'
 import Image from 'next/image'
 
 interface HeaderProps {
   onSearch: (query: string) => void
   mencionesCount: number
-  onRefresh?: () => void
   onGestionAgentes?: () => void
 }
 
-export function Header({ onSearch, mencionesCount, onRefresh, onGestionAgentes }: HeaderProps) {
+export function Header({ onSearch, mencionesCount, onGestionAgentes }: HeaderProps) {
   const { data: session } = useSession()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [searchQuery, setSearchQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showMobileSearch, setShowMobileSearch] = useState(false)
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
@@ -75,8 +73,8 @@ export function Header({ onSearch, mencionesCount, onRefresh, onGestionAgentes }
             </span>
           </div>
 
-          {/* Búsqueda */}
-          <form onSubmit={handleSearch} className="hidden sm:flex flex-1 max-w-md mx-4">
+          {/* Búsqueda - Desktop */}
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-4">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -90,15 +88,20 @@ export function Header({ onSearch, mencionesCount, onRefresh, onGestionAgentes }
           </form>
 
           {/* Usuario y acciones */}
-          <div className="flex items-center gap-2">
-            {/* Botones: Scraper, Procesamiento IA y Gestión Agentes */}
-            <div className="flex items-center gap-2">
-              <ScraperButton onComplete={onRefresh} />
-              {/* <AIProcessButton onComplete={onRefresh} /> */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Botón búsqueda móvil */}
+            <button 
+              className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
+              onClick={() => setShowMobileSearch(!showMobileSearch)}
+            >
+              <Search className="w-5 h-5 text-gray-600" />
+            </button>
+            {/* Botones: Gestión Agentes */}
+            <div className="hidden sm:flex items-center gap-1 sm:gap-2">
               {onGestionAgentes && (
                 <button
                   onClick={onGestionAgentes}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors text-sm font-medium"
+                  className="flex items-center gap-2 px-2 sm:px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors text-sm font-medium"
                   title="Gestionar Agentes de Campo"
                 >
                   <Users className="w-4 h-4" />
@@ -108,20 +111,11 @@ export function Header({ onSearch, mencionesCount, onRefresh, onGestionAgentes }
             </div>
 
             {mencionesCount > 0 && (
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
                 <User className="w-4 h-4" />
                 <span>{mencionesCount} menciones</span>
               </div>
             )}
-            
-            <button className="relative p-2 hover:bg-gray-100 rounded-lg">
-              <Bell className="w-5 h-5 text-gray-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-            </button>
-            
-            <button className="p-2 hover:bg-gray-100 rounded-lg">
-              <Settings className="w-5 h-5 text-gray-600" />
-            </button>
 
             <div className="hidden sm:flex items-center gap-2 ml-2 pl-4 border-l border-gray-200 relative">
               <button 
@@ -160,6 +154,78 @@ export function Header({ onSearch, mencionesCount, onRefresh, onGestionAgentes }
             </div>
           </div>
         </div>
+
+        {/* Barra de búsqueda móvil */}
+        {showMobileSearch && (
+          <div className="md:hidden px-4 pb-3 border-t border-gray-100 pt-3">
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar noticias..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  autoFocus
+                />
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowMobileSearch(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Menú móvil desplegable */}
+        {menuOpen && (
+          <div className="lg:hidden border-t border-gray-200 bg-white px-4 py-3 space-y-3">
+            <div className="flex items-center gap-3">
+              {onGestionAgentes && (
+                <button
+                  onClick={() => {
+                    onGestionAgentes()
+                    setMenuOpen(false)
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Agentes</span>
+                </button>
+              )}
+            </div>
+            {mencionesCount > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium w-fit">
+                <User className="w-4 h-4" />
+                <span>{mencionesCount} menciones</span>
+              </div>
+            )}
+            <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <User className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  {session?.user?.name || 'Usuario'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {session?.user?.cargo || 'Legislador'}
+                </p>
+              </div>
+              <button
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className="ml-auto flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Salir
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   )

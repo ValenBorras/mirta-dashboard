@@ -66,6 +66,7 @@ CREATE TABLE noticia (
     urgencia VARCHAR(20) DEFAULT 'media', -- 'alta', 'media', 'baja'
     sentimiento VARCHAR(20), -- 'positivo', 'neutral', 'negativo'
     ubicacion_geografica VARCHAR(200),
+    nivel_geografico VARCHAR(20), -- 'internacional', 'nacional', 'provincial', 'municipal'
     palabras_clave JSON, -- Array de keywords
     impacto_legislativo TEXT, -- Descripción del impacto potencial
     requiere_accion BOOLEAN DEFAULT false,
@@ -106,6 +107,7 @@ CREATE INDEX idx_noticia_fecha_pub ON noticia(fecha_publicacion DESC);
 CREATE INDEX idx_noticia_extraido ON noticia(extraido_en DESC);
 CREATE INDEX idx_noticia_urgencia ON noticia(urgencia);
 CREATE INDEX idx_noticia_categoria ON noticia(categoria);
+CREATE INDEX idx_noticia_nivel_geo ON noticia(nivel_geografico);
 CREATE INDEX idx_noticia_tipo_fuente ON noticia(tipo_fuente);
 CREATE INDEX idx_noticia_procesado ON noticia(procesado_llm);
 CREATE INDEX idx_noticia_noticiero ON noticia(noticiero_id);

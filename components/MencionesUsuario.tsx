@@ -56,11 +56,11 @@ export function MencionesUsuario({
 
   return (
     <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
-      <div className="p-4 border-b border-purple-200 flex items-center justify-between">
-        <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-          <User className="w-5 h-5 text-purple-600" />
+      <div className="p-3 sm:p-4 border-b border-purple-200 flex items-center justify-between">
+        <h2 className="font-semibold text-sm sm:text-base text-gray-900 flex items-center gap-2">
+          <User className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
           Sus Menciones
-          <span className="text-sm font-normal text-purple-600">
+          <span className="text-xs sm:text-sm font-normal text-purple-600">
             ({count} {count === 1 ? 'vez' : 'veces'})
           </span>
         </h2>
@@ -71,47 +71,48 @@ export function MencionesUsuario({
         )}
       </div>
 
-      <div className="p-3 space-y-2 max-h-[300px] overflow-y-auto">
+      <div className="p-2 sm:p-3 space-y-2 max-h-[250px] sm:max-h-[300px] overflow-y-auto">
         {menciones.slice(0, 5).map((noticia) => (
           <div
             key={noticia.id}
             onClick={() => onNoticiaClick?.(noticia.id)}
-            className="bg-white rounded-lg p-3 hover:shadow-md transition-all cursor-pointer group border border-transparent hover:border-purple-300"
+            className="bg-white rounded-lg p-2.5 sm:p-3 hover:shadow-md transition-all cursor-pointer group border border-transparent hover:border-purple-300"
           >
-            <div className="flex items-start gap-2 mb-1">
+            <div className="flex items-start gap-1.5 sm:gap-2 mb-1 flex-wrap">
               {noticia.tipo_fuente === 'agente' && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
-                  <Radio className="w-3 h-3" />
+                <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                  <Radio className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   Campo
                 </span>
               )}
               {noticia.categoria && (
                 <span 
-                  className="px-2 py-0.5 text-xs font-medium rounded-full text-white"
+                  className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium rounded-full text-white"
                   style={{ backgroundColor: CATEGORIA_COLORS[noticia.categoria] || '#6B7280' }}
                 >
                   {noticia.categoria}
                 </span>
               )}
               <span 
-                className="px-2 py-0.5 text-xs font-medium rounded-full text-white ml-auto"
+                className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium rounded-full text-white ml-auto"
                 style={{ backgroundColor: URGENCIA_COLORS[noticia.urgencia] }}
               >
                 {noticia.urgencia}
               </span>
             </div>
 
-            <h3 className="font-medium text-gray-900 text-sm mb-1 group-hover:text-purple-600 transition-colors line-clamp-2">
+            <h3 className="font-medium text-gray-900 text-xs sm:text-sm mb-1 group-hover:text-purple-600 transition-colors line-clamp-2">
               {highlightName(noticia.titulo, nombreUsuario)}
             </h3>
 
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="flex items-center gap-2 text-[10px] sm:text-xs text-gray-500 flex-wrap">
               <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {formatDate(noticia.fecha_publicacion)} {formatTime(noticia.fecha_publicacion)}
+                <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                <span className="hidden sm:inline">{formatDate(noticia.fecha_publicacion)} {formatTime(noticia.fecha_publicacion)}</span>
+                <span className="sm:hidden">{formatDate(noticia.fecha_publicacion)}</span>
               </span>
               {noticia.ubicacion_geografica && (
-                <span className="flex items-center gap-1">
+                <span className="hidden sm:flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
                   {noticia.ubicacion_geografica}
                 </span>
@@ -124,7 +125,7 @@ export function MencionesUsuario({
                   className="ml-auto flex items-center gap-1 text-purple-600 hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <ExternalLink className="w-3 h-3" />
+                  <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   Ver
                 </a>
               )}
