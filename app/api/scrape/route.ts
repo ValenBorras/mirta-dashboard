@@ -308,10 +308,10 @@ async function extractElOnce(url: string): Promise<NoticiaExtraida | null> {
     cuerpo = decodeHtmlEntities(cuerpo)
 
     // Buscar fecha
-    let fecha = $('meta[property="article:published_time"]').attr('content') ||
-                $('meta[name="date"]').attr('content') ||
-                $('time').attr('datetime') ||
-                new Date().toISOString()
+    const fecha = $('meta[property="article:published_time"]').attr('content') ||
+          $('meta[name="date"]').attr('content') ||
+          $('time').attr('datetime') ||
+          new Date().toISOString()
 
     if (!titulo || !cuerpo || cuerpo.length < 50) {
       return null
@@ -706,24 +706,7 @@ async function saveNoticia(noticia: NoticiaExtraida, noticieroId: number): Promi
   }
 }
 
-/**
- * Procesa un array de promesas en lotes con concurrencia limitada
- */
-async function processInBatches<T, R>(
-  items: T[],
-  batchSize: number,
-  processor: (item: T) => Promise<R>
-): Promise<R[]> {
-  const results: R[] = []
-  
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batch = items.slice(i, i + batchSize)
-    const batchResults = await Promise.all(batch.map(item => processor(item)))
-    results.push(...batchResults)
-  }
-  
-  return results
-}
+// Removed unused `processInBatches` helper (was defined but never used).
 
 /**
  * Construye el dataset de noticias
