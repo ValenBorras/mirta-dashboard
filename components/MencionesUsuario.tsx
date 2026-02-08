@@ -12,7 +12,7 @@ interface NoticiaBasica {
   link: string | null
   fecha_publicacion: string
   categoria: string | null
-  urgencia: 'alta' | 'media' | 'baja'
+  urgencia: 'alta' | 'media' | 'baja' | 'irrelevante'
   provincia: string | null
   ciudad: string | null
   tipo_fuente: 'noticiero' | 'agente'

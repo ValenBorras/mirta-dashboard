@@ -12,6 +12,7 @@ interface NoticiaModalProps {
 
 export function NoticiaModal({ noticia, onClose }: NoticiaModalProps) {
   const [tab, setTab] = useState<'resumen' | 'completo'>(noticia && noticia.resumen ? 'resumen' : 'completo')
+  const [imageExpanded, setImageExpanded] = useState(false)
 
   if (!noticia) return null
 
@@ -108,6 +109,21 @@ export function NoticiaModal({ noticia, onClose }: NoticiaModalProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          {/* Imagen principal */}
+          {noticia.imagen_url && (
+            <div className="mb-4 sm:mb-6">
+              <img 
+                src={noticia.imagen_url} 
+                alt={noticia.titulo}
+                className="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => setImageExpanded(true)}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
+            </div>
+          )}
+
           {tab === 'resumen' ? (
             <>
               {noticia.resumen ? (
@@ -214,6 +230,27 @@ export function NoticiaModal({ noticia, onClose }: NoticiaModalProps) {
           )}
         </div>
       </div>
+
+      {/* Visor de imagen expandida */}
+      {imageExpanded && noticia.imagen_url && (
+        <div 
+          className="absolute inset-0 z-10 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setImageExpanded(false)}
+        >
+          <button
+            onClick={() => setImageExpanded(false)}
+            className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+          <img 
+            src={noticia.imagen_url}
+            alt={noticia.titulo}
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   )
 }

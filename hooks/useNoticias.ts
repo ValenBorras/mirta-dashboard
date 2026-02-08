@@ -36,6 +36,7 @@ export function useNoticias(filters: Filters = {}) {
           agente:agente_id(nombre, provincia)
         `)
         .eq('procesado_llm', true)
+        .neq('urgencia', 'irrelevante')
         .order('fecha_publicacion', { ascending: false })
 
       if (filters.categoria) {
@@ -66,23 +67,32 @@ export function useNoticias(filters: Filters = {}) {
 
       // Filtros de nivel geográfico
       if (filters.nivel_geografico) {
-        query = query.eq('nivel_geografico', filters.nivel_geografico)
-        
-        // Para provincial, filtrar también por la provincia del usuario
+        // Para provincial, filtrar por la provincia del usuario
         if (filters.nivel_geografico === 'provincial' && filters.userProvincia) {
+          query = query.eq('nivel_geografico', 'provincial')
           query = query.eq('provincia', filters.userProvincia)
         }
-        
-        // Para municipal, filtrar por provincia y ciudad del usuario
-        if (filters.nivel_geografico === 'municipal' && filters.userCiudad) {
+        // Para municipal, incluir noticias municipales Y noticias provinciales que mencionan la ciudad
+        else if (filters.nivel_geografico === 'municipal' && filters.userCiudad) {
+          // Buscar noticias que:
+          // 1. Sean de nivel municipal de la ciudad del usuario
+          // 2. O sean de nivel provincial pero que mencionan específicamente la ciudad
+          query = query.or(
+            `and(nivel_geografico.eq.municipal,ciudad.eq.${filters.userCiudad}),and(nivel_geografico.eq.provincial,ciudad.eq.${filters.userCiudad})`
+          )
+          
+          // Filtrar también por provincia si está disponible
           if (filters.userProvincia) {
             query = query.eq('provincia', filters.userProvincia)
           }
-          query = query.eq('ciudad', filters.userCiudad)
+        }
+        // Para otros niveles geográficos
+        else {
+          query = query.eq('nivel_geografico', filters.nivel_geografico)
         }
       }
 
-      const { data, error: fetchError } = await query.limit(50)
+      const { data, error: fetchError } = await query
 
       if (fetchError) throw fetchError
       setNoticias((data as NoticiaConRelaciones[]) || [])
@@ -118,8 +128,8 @@ export function useReportesCampo() {
           agente:agente_id(nombre, provincia)
         `)
         .eq('tipo_fuente', 'agente')
+        .neq('urgencia', 'irrelevante')
         .order('fecha_publicacion', { ascending: false })
-        .limit(100)
 
       if (fetchError) throw fetchError
       setReportes((data as NoticiaConRelaciones[]) || [])
@@ -158,10 +168,12 @@ export function useNoticiasHoy() {
         supabase
           .from('noticia')
           .select('id', { count: 'exact', head: true })
+          .neq('urgencia', 'irrelevante')
           .gte('fecha_publicacion', hoy.toISOString()),
         supabase
           .from('noticia')
           .select('id', { count: 'exact', head: true })
+          .neq('urgencia', 'irrelevante')
           .gte('fecha_publicacion', ayer.toISOString())
           .lt('fecha_publicacion', hoy.toISOString()),
         supabase
@@ -173,6 +185,7 @@ export function useNoticiasHoy() {
           .from('noticia')
           .select('id', { count: 'exact', head: true })
           .eq('tipo_fuente', 'agente')
+          .neq('urgencia', 'irrelevante')
       ])
 
       setStats({
@@ -240,6 +253,7 @@ export function useMencionesUsuario(nombreUsuario: string) {
             agente:agente_id(nombre, provincia)
           `, { count: 'exact' })
           .or(`titulo.ilike.%${nombreUsuario}%,cuerpo.ilike.%${nombreUsuario}%,descripcion.ilike.%${nombreUsuario}%`)
+          .neq('urgencia', 'irrelevante')
           .order('fecha_publicacion', { ascending: false })
           .limit(10)
 
@@ -272,6 +286,7 @@ export function useTendencias() {
         const { data, error } = await supabase
           .from('noticia')
           .select('palabras_clave, categoria')
+          .neq('urgencia', 'irrelevante')
           .gte('fecha_publicacion', hoy.toISOString())
 
         if (error) throw error

@@ -203,6 +203,7 @@ export function NewsFeed({
                 <option value="alta">Alta</option>
                 <option value="media">Media</option>
                 <option value="baja">Baja</option>
+                <option value="irrelevante">Irrelevante</option>
               </select>
             </div>
             <div>
@@ -321,6 +322,21 @@ export function NewsFeed({
                   className="w-1 h-full min-h-[50px] sm:min-h-[60px] rounded-full flex-shrink-0"
                   style={{ backgroundColor: URGENCIA_COLORS[noticia.urgencia] }}
                 />
+                
+                {/* Imagen miniatura */}
+                {noticia.imagen_url && (
+                  <div className="flex-shrink-0">
+                    <img 
+                      src={noticia.imagen_url} 
+                      alt={noticia.titulo}
+                      className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg"
+                      onError={(e) => {
+                        // Si la imagen falla, ocultar el elemento
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  </div>
+                )}
                 
                 <div className="flex-1 min-w-0">
                   {/* Badges */}

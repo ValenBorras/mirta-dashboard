@@ -39,11 +39,12 @@ export interface Noticia {
   fecha_publicacion: string
   link: string | null
   cuerpo: string | null
+  imagen_url: string | null
   fuente_base: string | null
   extraido_en: string | null
   categoria: string | null
   resumen: string | null
-  urgencia: 'alta' | 'media' | 'baja'
+  urgencia: 'alta' | 'media' | 'baja' | 'irrelevante'
   sentimiento: 'positivo' | 'neutral' | 'negativo' | null
   nivel_geografico: 'internacional' | 'nacional' | 'provincial' | 'municipal' | null
   provincia: string | null
@@ -123,7 +124,8 @@ export const CATEGORIAS: Categoria[] = [
 export const URGENCIA_COLORS = {
   alta: '#DC2626',
   media: '#F59E0B',
-  baja: '#10B981'
+  baja: '#10B981',
+  irrelevante: '#9CA3AF'
 } as const
 
 export const CATEGORIA_COLORS: Record<string, string> = {

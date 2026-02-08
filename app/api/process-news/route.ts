@@ -9,7 +9,7 @@ const promptPath = path.join(process.cwd(), 'prompts', 'news-analysis.md')
 interface AnalysisResult {
   categoria: string
   resumen: string
-  urgencia: 'alta' | 'media' | 'baja'
+  urgencia: 'alta' | 'media' | 'baja' | 'irrelevante'
   sentimiento: 'positivo' | 'neutral' | 'negativo'
   nivel_geografico: 'internacional' | 'nacional' | 'provincial' | 'municipal'
   provincia: string | null
@@ -86,19 +86,26 @@ export async function GET() {
   return NextResponse.json({
     message: 'Endpoint de procesamiento de noticias con IA',
     usage: 'POST para procesar noticias pendientes',
+    params: {
+      limit: 'Número máximo de noticias a procesar (opcional, default: todas)',
+      concurrency: 'Número de noticias a procesar simultáneamente (default: 10)'
+    },
     pendientes: count || 0
   })
 }
 
 export async function POST(request: Request) {
   try {
-    // Obtener límite del body (opcional)
+    // Obtener parámetros del body
     let limit: number | null = null
+    let concurrency = 10
+    
     try {
       const body = await request.json()
       limit = body.limit || null
+      concurrency = body.concurrency || 10
     } catch {
-      // Sin body, procesar todas
+      // Sin body, usar defaults
     }
 
     // Leer el prompt del sistema
@@ -144,64 +151,98 @@ export async function POST(request: Request) {
     }
 
     console.log(`\n🤖 Procesando ${noticias.length} noticias con IA...`)
+    console.log(`⚡ Concurrencia: ${concurrency} noticias simultáneas`)
 
     const results: { id: number; titulo: string; status: 'success' | 'error'; error?: string }[] = []
     let processed = 0
     let failed = 0
 
-    for (const noticia of noticias as Noticia[]) {
-      console.log(`\n📰 Analizando: ${noticia.titulo.slice(0, 60)}...`)
+    // Función para procesar una noticia individual
+    const procesarNoticia = async (noticia: Noticia) => {
+      try {
+        const analysis = await analyzeNoticia(noticia, systemPrompt)
 
-      const analysis = await analyzeNoticia(noticia, systemPrompt)
+        if (analysis) {
+          // Actualizar la noticia con el análisis
+          const { error: updateError } = await supabaseAdmin
+            .from('noticia')
+            .update({
+              categoria: analysis.categoria,
+              resumen: analysis.resumen,
+              urgencia: analysis.urgencia,
+              sentimiento: analysis.sentimiento,
+              nivel_geografico: analysis.nivel_geografico,
+              provincia: analysis.provincia,
+              ciudad: analysis.ciudad,
+              palabras_clave: analysis.palabras_clave,
+              procesado_llm: true
+            })
+            .eq('id', noticia.id)
 
-      if (analysis) {
-        // Actualizar la noticia con el análisis
-        const { error: updateError } = await supabaseAdmin
-          .from('noticia')
-          .update({
-            categoria: analysis.categoria,
-            resumen: analysis.resumen,
-            urgencia: analysis.urgencia,
-            sentimiento: analysis.sentimiento,
-            nivel_geografico: analysis.nivel_geografico,
-            provincia: analysis.provincia,
-            ciudad: analysis.ciudad,
-            palabras_clave: analysis.palabras_clave,
-            procesado_llm: true
-          })
-          .eq('id', noticia.id)
-
-        if (updateError) {
-          console.error(`   ❌ Error actualizando noticia ${noticia.id}:`, updateError)
-          results.push({
-            id: noticia.id,
-            titulo: noticia.titulo,
-            status: 'error',
-            error: updateError.message
-          })
-          failed++
+          if (updateError) {
+            console.error(`   ❌ Error actualizando noticia ${noticia.id}:`, updateError)
+            return {
+              id: noticia.id,
+              titulo: noticia.titulo,
+              status: 'error' as const,
+              error: updateError.message,
+              analysis
+            }
+          } else {
+            console.log(`   ✅ ${noticia.titulo.slice(0, 60)}... | ${analysis.categoria} | ${analysis.urgencia}`)
+            return {
+              id: noticia.id,
+              titulo: noticia.titulo,
+              status: 'success' as const,
+              analysis
+            }
+          }
         } else {
-          console.log(`   ✅ Analizada: ${analysis.categoria} | ${analysis.nivel_geografico} | ${analysis.urgencia}`)
-          results.push({
+          console.log(`   ❌ Error al analizar: ${noticia.titulo.slice(0, 60)}...`)
+          return {
             id: noticia.id,
             titulo: noticia.titulo,
-            status: 'success'
-          })
-          processed++
+            status: 'error' as const,
+            error: 'Error en análisis de IA'
+          }
         }
-      } else {
-        console.log(`   ❌ Error al analizar`)
-        results.push({
+      } catch (error) {
+        return {
           id: noticia.id,
           titulo: noticia.titulo,
-          status: 'error',
-          error: 'Error en análisis de IA'
-        })
-        failed++
+          status: 'error' as const,
+          error: error instanceof Error ? error.message : 'Error desconocido'
+        }
       }
+    }
 
-      // Pequeña pausa para no saturar la API
-      await new Promise(resolve => setTimeout(resolve, 200))
+    // Procesar en lotes paralelos
+    const totalBatches = Math.ceil(noticias.length / concurrency)
+    
+    for (let i = 0; i < noticias.length; i += concurrency) {
+      const batch = noticias.slice(i, i + concurrency) as Noticia[]
+      const batchNum = Math.floor(i / concurrency) + 1
+      
+      console.log(`\n🔄 Procesando lote ${batchNum}/${totalBatches} (${batch.length} noticias)...`)
+      
+      const batchResults = await Promise.all(batch.map(noticia => procesarNoticia(noticia)))
+      
+      // Contar resultados del lote
+      for (const result of batchResults) {
+        if (result.status === 'success') {
+          processed++
+        } else {
+          failed++
+        }
+        results.push({
+          id: result.id,
+          titulo: result.titulo,
+          status: result.status,
+          error: result.error
+        })
+      }
+      
+      console.log(`   Lote ${batchNum}: ${batchResults.filter(r => r.status === 'success').length} OK, ${batchResults.filter(r => r.status === 'error').length} errores`)
     }
 
     console.log(`\n✨ Procesamiento completado: ${processed} OK, ${failed} errores`)

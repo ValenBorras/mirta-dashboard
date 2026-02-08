@@ -7,22 +7,64 @@ const HEADERS = {
 }
 
 /**
- * Convierte una fecha a timestamp UTC
- * Las fechas de los feeds RSS generalmente ya vienen en UTC
- * Solo se convierte al formato ISO estándar
+ * Decodifica entidades HTML que puedan haber quedado sin procesar
  */
-function toArgentinaTimestamp(dateStr: string): string {
+function decodeHtmlEntities(text: string): string {
+  const entities: Record<string, string> = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
+    '&apos;': "'",
+    '&nbsp;': ' ',
+    '&aacute;': 'á',
+    '&eacute;': 'é',
+    '&iacute;': 'í',
+    '&oacute;': 'ó',
+    '&uacute;': 'ú',
+    '&Aacute;': 'Á',
+    '&Eacute;': 'É',
+    '&Iacute;': 'Í',
+    '&Oacute;': 'Ó',
+    '&Uacute;': 'Ú',
+    '&ntilde;': 'ñ',
+    '&Ntilde;': 'Ñ',
+    '&uuml;': 'ü',
+    '&Uuml;': 'Ü',
+    '&iquest;': '¿',
+    '&iexcl;': '¡'
+  }
+
+  let decoded = text
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replaceAll(entity, char)
+  }
+  
+  // También decodificar entidades numéricas
+  decoded = decoded.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code)))
+  decoded = decoded.replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)))
+  
+  return decoded
+}
+
+/**
+ * Devuelve la fecha exactamente como viene del sitio web
+ */
+function preserveOriginalTimestamp(dateStr: string): string {
   if (!dateStr) {
     return new Date().toISOString()
   }
   
-  const date = new Date(dateStr.trim())
+  const trimmed = dateStr.trim()
+  const date = new Date(trimmed)
   
   if (isNaN(date.getTime())) {
     return new Date().toISOString()
   }
   
-  return date.toISOString()
+  // Devolver tal cual viene, sin modificaciones
+  return trimmed
 }
 
 // Sitios de noticias a scrapear
@@ -31,7 +73,23 @@ const SITES = [
   'https://www.lanacion.com.ar/',
   'https://www.tn.com.ar/',
   'https://cnnespanol.cnn.com/argentina',
-  'https://elpais.com/'
+  'https://elpais.com/',
+  'https://www.elonce.com/ultimas-noticias',
+  'https://www.elonce.com/parana',
+  'https://www.elonce.com/policiales',
+  'https://www.elonce.com/politica',
+  'https://www.elonce.com/sociedad',
+  'https://www.elonce.com/internacionales',
+  'https://www.elonce.com/economia',
+  'https://www.analisisdigital.com.ar/',
+  'https://www.analisisdigital.com.ar/opinion',
+  'https://www.analisisdigital.com.ar/judiciales',
+  'https://www.analisisdigital.com.ar/provinciales',
+  'https://www.analisisdigital.com.ar/policiales',
+  'https://www.analisisdigital.com.ar/economia',
+  'https://www.analisisdigital.com.ar/cultura',
+  'https://www.analisisdigital.com.ar/nacionales',
+  'https://www.analisisdigital.com.ar/locales'
 ]
 
 // Feeds RSS
@@ -56,7 +114,6 @@ const FEEDS = [
   'http://www.lapoliticaonline.com.ar/files/rss/economia.xml',
   'http://www.lapoliticaonline.com.ar/files/rss/ciudad.xml',
   'http://www.lapoliticaonline.com.ar/files/rss/provincia.xml',
-  'http://www.lapoliticaonline.com.ar/files/rss/energía.xml',
   'http://www.lapoliticaonline.com.ar/files/rss/judiciales.xml',
   'http://www.lapoliticaonline.com.ar/files/rss/medios.xml'
 ]
@@ -64,14 +121,15 @@ const FEEDS = [
 // Categorías relevantes
 const RELEVANTES = [
   'politica', 'economia', 'sociedad', 'educacion', 'seguridad',
-  'nacion', 'elecciones', 'actualidad', 'argentina', 'ciudades'
+  'nacion', 'elecciones', 'actualidad', 'argentina', 'ciudades',
+  'judiciales', 'provinciales', 'policiales', 'locales', 'nacionales', 'opinion'
 ]
 
 // Categorías no relevantes
 const NO_RELEVANTES = [
   'deportes', 'futbol', 'autos', 'show', 'fama', 'espectaculos',
   'gente', 'moda', 'estilo', 'gastronomia', 'viajes', 'revista',
-  'salud', 'bienestar', 'icon', 'elviajero', 'television', 'cultura'
+  'salud', 'bienestar', 'icon', 'elviajero', 'television'
 ]
 
 interface NoticiaExtraida {
@@ -82,8 +140,214 @@ interface NoticiaExtraida {
   fecha_publicacion: string
   link: string
   cuerpo: string | null
+  imagen_url: string | null
   fuente_base: string
   extraido_en: string
+}
+
+/**
+ * Extrae metadatos y cuerpo de una noticia de Análisis Digital desde el HTML
+ */
+async function extractAnalisisDigital(url: string): Promise<NoticiaExtraida | null> {
+  try {
+    const response = await fetch(url, { headers: HEADERS })
+    if (!response.ok) return null
+
+    const html = await response.text()
+    const $ = cheerio.load(html)
+
+    // Extraer de meta tags Open Graph
+    const titulo = decodeHtmlEntities(
+      $('meta[property="og:title"]').attr('content') || 
+      $('h1').first().text().trim()
+    )
+
+    const descripcion = $('meta[property="og:description"]').attr('content') || 
+                       $('meta[name="description"]').attr('content') || 
+                       null
+    const descripcionDecoded = descripcion ? decodeHtmlEntities(descripcion) : null
+
+    const imagenUrl = $('meta[property="og:image"]').attr('content') || null
+
+    // Extraer cuerpo del artículo - buscar párrafos con contenido significativo
+    const parrafos = $('p')
+      .map((_, el) => $(el).text().trim())
+      .get()
+      .filter(p => {
+        // Filtrar párrafos muy cortos o que sean elementos de navegación
+        return p.length > 50 && 
+               !p.includes('href=') && 
+               !p.includes('src=') &&
+               !p.includes('Newsletter') &&
+               !p.includes('Seguinos en') &&
+               !p.includes('Suscribite')
+      })
+
+    const cuerpo = decodeHtmlEntities(parrafos.join('\n\n'))
+
+    // Extraer fecha
+    let fecha = $('meta[property="article:published_time"]').attr('content') ||
+                $('meta[name="date"]').attr('content') ||
+                $('time').attr('datetime')
+
+    // Si no hay fecha en meta tags, intentar extraer de la URL (formato: /seccion/YYYY/MM/DD/...)
+    if (!fecha) {
+      const dateMatch = url.match(/\/(\d{4})\/(\d{2})\/(\d{2})\//)
+      if (dateMatch) {
+        fecha = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}T12:00:00Z`
+      } else {
+        fecha = new Date().toISOString()
+      }
+    }
+
+    if (!titulo || !cuerpo || cuerpo.length < 100) {
+      return null
+    }
+
+    const parsedUrl = new URL(url)
+    return {
+      titulo,
+      descripcion: descripcionDecoded,
+      autor: null,
+      fuente: 'Análisis Digital',
+      fecha_publicacion: preserveOriginalTimestamp(fecha),
+      link: url,
+      cuerpo,
+      imagen_url: imagenUrl,
+      fuente_base: parsedUrl.hostname,
+      extraido_en: new Date().toISOString()
+    }
+  } catch (error) {
+    console.error('Error extrayendo Análisis Digital:', error)
+    return null
+  }
+}
+
+/**
+ * Extrae metadatos y cuerpo de una noticia de El Once desde el HTML
+ */
+async function extractElOnce(url: string): Promise<NoticiaExtraida | null> {
+  try {
+    const response = await fetch(url, { headers: HEADERS })
+    if (!response.ok) return null
+
+    const html = await response.text()
+    const $ = cheerio.load(html)
+
+    // Buscar el título - puede estar en h1 o en meta tags
+    let titulo = $('h1').first().text().trim()
+    if (!titulo) {
+      titulo = $('meta[property="og:title"]').attr('content') || ''
+    }
+    titulo = decodeHtmlEntities(titulo)
+
+    // Buscar la descripción
+    let descripcion: string | null = $('h2').first().text().trim()
+    if (!descripcion) {
+      descripcion = $('meta[property="og:description"]').attr('content') || 
+                    $('meta[name="description"]').attr('content') || 
+                    null
+    }
+    if (descripcion) {
+      descripcion = decodeHtmlEntities(descripcion)
+    }
+
+    // Buscar el cuerpo de la noticia - usualmente en párrafos dentro del artículo
+    let cuerpo = ''
+    
+    // Textos de UI/navegación que debemos excluir
+    const excludeTexts = [
+      '¿Querés recibir alertas de último momento?',
+      'Copyright',
+      '©',
+      'Seguinos en',
+      'Suscribite',
+      'Newsletter',
+      'Ver más',
+      'Compartir',
+      'Acceso a portada',
+      'Edición N°'
+    ]
+    
+    // Función para verificar si un párrafo debe ser excluido
+    const shouldExclude = (text: string): boolean => {
+      return excludeTexts.some(exclude => text.includes(exclude)) || text.length < 20
+    }
+    
+    // Intentar varios selectores comunes para el contenido
+    const contentSelectors = [
+      'article p',
+      '.article-content p',
+      '.content p',
+      '.body p',
+      'main p'
+    ]
+
+    for (const selector of contentSelectors) {
+      const paragraphs = $(selector)
+      if (paragraphs.length > 0) {
+        cuerpo = paragraphs
+          .map((_, el) => $(el).text().trim())
+          .get()
+          .filter(p => !shouldExclude(p))
+          .join('\n\n')
+        if (cuerpo.length > 100) break
+      }
+    }
+
+    // Si no encontramos cuerpo con selectores específicos, buscar todos los párrafos
+    if (!cuerpo || cuerpo.length < 100) {
+      cuerpo = $('p')
+        .map((_, el) => $(el).text().trim())
+        .get()
+        .filter(p => !shouldExclude(p))
+        .join('\n\n')
+    }
+
+    // Decodificar entidades HTML en el cuerpo
+    cuerpo = decodeHtmlEntities(cuerpo)
+
+    // Buscar fecha
+    let fecha = $('meta[property="article:published_time"]').attr('content') ||
+                $('meta[name="date"]').attr('content') ||
+                $('time').attr('datetime') ||
+                new Date().toISOString()
+
+    if (!titulo || !cuerpo || cuerpo.length < 50) {
+      return null
+    }
+
+    // Buscar imagen
+    let imagenUrl: string | null = null
+    imagenUrl = $('meta[property="og:image"]').attr('content') ||
+                $('meta[name="twitter:image"]').attr('content') ||
+                $('article img').first().attr('src') ||
+                null
+
+    // Asegurar que la URL de la imagen sea absoluta
+    if (imagenUrl && !imagenUrl.startsWith('http')) {
+      const parsedUrl = new URL(url)
+      const base = `${parsedUrl.protocol}//${parsedUrl.host}`
+      imagenUrl = imagenUrl.startsWith('/') ? `${base}${imagenUrl}` : `${base}/${imagenUrl}`
+    }
+
+    const parsedUrl = new URL(url)
+    return {
+      titulo,
+      descripcion,
+      autor: null,
+      fuente: 'El Once',
+      fecha_publicacion: preserveOriginalTimestamp(fecha),
+      link: url,
+      cuerpo,
+      imagen_url: imagenUrl,
+      fuente_base: parsedUrl.hostname,
+      extraido_en: new Date().toISOString()
+    }
+  } catch (error) {
+    console.error('Error extrayendo El Once:', error)
+    return null
+  }
 }
 
 /**
@@ -91,6 +355,16 @@ interface NoticiaExtraida {
  */
 async function extractJsonLd(url: string): Promise<NoticiaExtraida | null> {
   try {
+    // Si es El Once, usar el scraper específico
+    if (url.includes('elonce.com')) {
+      return extractElOnce(url)
+    }
+
+    // Si es Análisis Digital, usar el scraper específico
+    if (url.includes('analisisdigital.com.ar')) {
+      return extractAnalisisDigital(url)
+    }
+
     const response = await fetch(url, { headers: HEADERS })
     if (!response.ok) return null
 
@@ -134,20 +408,46 @@ async function extractJsonLd(url: string): Promise<NoticiaExtraida | null> {
 
           // Obtener fecha de publicación
           const fechaRaw = article.datePublished as string
-          const fechaPublicacion = toArgentinaTimestamp(fechaRaw)
 
           // Obtener nombre de la fuente
           const publisher = article.publisher as Record<string, unknown> | undefined
           const fuente = publisher?.name as string || new URL(url).hostname
 
+          // Decodificar entidades HTML en todos los campos de texto
+          const titulo = decodeHtmlEntities(article.headline as string)
+          const descripcion = article.description ? decodeHtmlEntities(article.description as string) : null
+          const cuerpo = article.articleBody ? decodeHtmlEntities(article.articleBody as string) : null
+          const autorDecoded = autor ? decodeHtmlEntities(autor) : null
+
+          // Extraer URL de imagen desde JSON-LD
+          let imagenUrl: string | null = null
+          const image = article.image
+          if (typeof image === 'string') {
+            imagenUrl = image
+          } else if (typeof image === 'object' && image !== null) {
+            // El campo image puede ser un objeto con url o contentUrl
+            const imageObj = image as Record<string, unknown>
+            imagenUrl = (imageObj.url as string) || (imageObj.contentUrl as string) || null
+          } else if (Array.isArray(image) && image.length > 0) {
+            // Puede ser un array de imágenes, tomamos la primera
+            const firstImage = image[0]
+            if (typeof firstImage === 'string') {
+              imagenUrl = firstImage
+            } else if (typeof firstImage === 'object' && firstImage !== null) {
+              const imgObj = firstImage as Record<string, unknown>
+              imagenUrl = (imgObj.url as string) || (imgObj.contentUrl as string) || null
+            }
+          }
+
           return {
-            titulo: article.headline as string,
-            descripcion: article.description as string || null,
-            autor: autor || null,
+            titulo,
+            descripcion,
+            autor: autorDecoded,
             fuente,
-            fecha_publicacion: fechaPublicacion,
+            fecha_publicacion: preserveOriginalTimestamp(fechaRaw || ''),
             link: (article.url as string) || url,
-            cuerpo: article.articleBody as string || null,
+            cuerpo,
+            imagen_url: imagenUrl,
             fuente_base: new URL(url).hostname,
             extraido_en: new Date().toISOString()
           }
@@ -207,10 +507,12 @@ async function getNewsLinks(site: string, limit: number = 30): Promise<string[]>
 
         // Patrones de URLs de noticias
         const hasNid = /-nid\d{6,}/.test(href)
-        const hasSection = /(politica|sociedad|mundo|show|economia|deportes)\//.test(href)
+        const hasSection = /(politica|sociedad|mundo|show|economia|deportes|policiales|judiciales|provinciales|locales|nacionales|opinion|cultura)\//.test(href)
         const hasDate = /\/\d{4}\/\d{2}\/\d{2}\//.test(href)
+        const isElOnceArticle = /\.htm$/.test(href) && href.includes('elonce.com')
+        const isAnalisisDigital = /\/(noticias-de-edicion-impresa|opinion|judiciales|provinciales|policiales|economia|cultura|nacionales|locales)\//.test(href) && href.includes('analisisdigital.com.ar')
 
-        if (hasNid || hasSection || hasDate) {
+        if (hasNid || hasSection || hasDate || isElOnceArticle || isAnalisisDigital) {
           const fullUrl = href.startsWith('http') ? href : `${base}${href.startsWith('/') ? '' : '/'}${href}`
           links.add(fullUrl)
         }
@@ -320,7 +622,9 @@ async function getOrCreateNoticiero(fuenteBase: string): Promise<number | null> 
       'elpais.com': 'El País',
       'www.ambito.com': 'Ámbito',
       'www.lapoliticaonline.com': 'La Política Online',
-      'www.lapoliticaonline.com.ar': 'La Política Online'
+      'www.lapoliticaonline.com.ar': 'La Política Online',
+      'www.elonce.com': 'El Once',
+      'www.analisisdigital.com.ar': 'Análisis Digital'
     }
 
     const nombre = nombreMap[fuenteBase] || fuenteBase
@@ -348,23 +652,7 @@ async function getOrCreateNoticiero(fuenteBase: string): Promise<number | null> 
   }
 }
 
-// Límite de horas para considerar una noticia como reciente
-const HORAS_LIMITE = 48
 
-/**
- * Verifica si una fecha está dentro de las últimas N horas
- */
-function isWithinHours(fechaStr: string, horas: number): boolean {
-  try {
-    const fecha = new Date(fechaStr)
-    const ahora = new Date()
-    const limiteMs = horas * 60 * 60 * 1000
-    const diferenciaMs = ahora.getTime() - fecha.getTime()
-    return diferenciaMs >= 0 && diferenciaMs <= limiteMs
-  } catch {
-    return false
-  }
-}
 
 /**
  * Verifica si una noticia ya existe por su link
@@ -397,6 +685,7 @@ async function saveNoticia(noticia: NoticiaExtraida, noticieroId: number): Promi
       fecha_publicacion: noticia.fecha_publicacion,
       link: noticia.link,
       cuerpo: noticia.cuerpo,
+      imagen_url: noticia.imagen_url,
       fuente_base: noticia.fuente_base,
       extraido_en: noticia.extraido_en,
       tipo_fuente: 'noticiero',
@@ -418,13 +707,33 @@ async function saveNoticia(noticia: NoticiaExtraida, noticieroId: number): Promi
 }
 
 /**
+ * Procesa un array de promesas en lotes con concurrencia limitada
+ */
+async function processInBatches<T, R>(
+  items: T[],
+  batchSize: number,
+  processor: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = []
+  
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize)
+    const batchResults = await Promise.all(batch.map(item => processor(item)))
+    results.push(...batchResults)
+  }
+  
+  return results
+}
+
+/**
  * Construye el dataset de noticias
  */
 async function buildNewsDataset(
   sites: string[],
   feeds: string[],
-  limit: number = 20
-): Promise<{ total: number; nuevas: number; errores: number; duplicadas: number; omitidas_fecha: number }> {
+  limit: number = 20,
+  concurrency: number = 20
+): Promise<{ total: number; nuevas: number; errores: number; duplicadas: number }> {
   const allLinks: string[] = []
   const seen = new Set<string>()
 
@@ -467,55 +776,76 @@ async function buildNewsDataset(
   }
 
   console.log(`\n📰 Total de links únicos a procesar: ${allLinks.length}`)
+  console.log(`⚡ Procesando con concurrencia de ${concurrency} links simultáneos`)
 
-  // Extraer contenidos y guardar
+  // Extraer contenidos y guardar (paralelizado)
   let nuevas = 0
   let errores = 0
-  let omitidas_fecha = 0
   let duplicadas = 0
 
-  for (const link of allLinks) {
+  // Función para procesar un link individual
+  const procesarLink = async (link: string): Promise<{ tipo: 'nueva' | 'duplicada' | 'error'; titulo?: string }> => {
     try {
       // Verificar primero si ya existe (evitar fetch innecesario)
       if (await noticiaExists(link)) {
-        duplicadas++
-        continue
+        return { tipo: 'duplicada' }
       }
 
       const noticia = await extractJsonLd(link)
 
       if (noticia) {
-        // Filtrar por fecha: solo noticias de las últimas 48 horas
-        if (!isWithinHours(noticia.fecha_publicacion, HORAS_LIMITE)) {
-          omitidas_fecha++
-          continue
-        }
-
         const noticieroId = await getOrCreateNoticiero(noticia.fuente_base)
 
         if (noticieroId) {
           const saved = await saveNoticia(noticia, noticieroId)
           if (saved) {
-            nuevas++
-            console.log(` ✅ ${noticia.titulo.slice(0, 80)}...`)
+            return { tipo: 'nueva', titulo: noticia.titulo }
           } else {
-            duplicadas++
+            return { tipo: 'duplicada' }
           }
         }
       }
+      return { tipo: 'error' }
     } catch {
-      errores++
+      return { tipo: 'error' }
     }
+  }
+
+  // Procesar en lotes paralelos
+  const totalBatches = Math.ceil(allLinks.length / concurrency)
+  
+  for (let i = 0; i < allLinks.length; i += concurrency) {
+    const batch = allLinks.slice(i, i + concurrency)
+    const batchNum = Math.floor(i / concurrency) + 1
+    
+    console.log(`\n🔄 Procesando lote ${batchNum}/${totalBatches} (${batch.length} links)...`)
+    
+    const resultados = await Promise.all(batch.map(link => procesarLink(link)))
+    
+    // Contar resultados del lote
+    for (const resultado of resultados) {
+      if (resultado.tipo === 'nueva') {
+        nuevas++
+        if (resultado.titulo) {
+          console.log(` ✅ ${resultado.titulo.slice(0, 80)}...`)
+        }
+      } else if (resultado.tipo === 'duplicada') {
+        duplicadas++
+      } else {
+        errores++
+      }
+    }
+    
+    console.log(`   Lote ${batchNum}: ${resultados.filter(r => r.tipo === 'nueva').length} nuevas, ${resultados.filter(r => r.tipo === 'duplicada').length} duplicadas, ${resultados.filter(r => r.tipo === 'error').length} errores`)
   }
 
   console.log(`\n🗞️ Scraping completado:`)
   console.log(`   - Total links procesados: ${allLinks.length}`)
   console.log(`   - Nuevas guardadas: ${nuevas}`)
   console.log(`   - Duplicadas omitidas: ${duplicadas}`)
-  console.log(`   - Fuera de rango (>${HORAS_LIMITE}h): ${omitidas_fecha}`)
   console.log(`   - Errores: ${errores}`)
 
-  return { total: allLinks.length, nuevas, errores, duplicadas, omitidas_fecha }
+  return { total: allLinks.length, nuevas, errores, duplicadas }
 }
 
 export async function GET() {
@@ -523,11 +853,8 @@ export async function GET() {
     message: 'Endpoint de scraping de noticias',
     usage: 'POST para ejecutar el scraping',
     params: {
-      limit: 'Número máximo de links por sitio (default: 30)'
-    },
-    config: {
-      horas_limite: HORAS_LIMITE,
-      descripcion: `Solo se guardan noticias de las últimas ${HORAS_LIMITE} horas`
+      limit: 'Número máximo de links por sitio (default: 30)',
+      concurrency: 'Número de links a procesar simultáneamente (default: 20)'
     }
   })
 }
@@ -536,10 +863,12 @@ export async function POST(request: Request) {
   try {
     // Obtener parámetros del body
     let limit = 30
+    let concurrency = 20
 
     try {
       const body = await request.json()
       limit = body.limit || 30
+      concurrency = body.concurrency || 20
     } catch {
       // Sin body, usar defaults
     }
@@ -547,10 +876,10 @@ export async function POST(request: Request) {
     console.log(`\n${'='.repeat(50)}`)
     console.log(`🚀 Iniciando scraping - ${new Date().toISOString()}`)
     console.log(`   Límite por sitio: ${limit}`)
-    console.log(`   Solo noticias de las últimas ${HORAS_LIMITE} horas`)
+    console.log(`   Concurrencia: ${concurrency} links simultáneos`)
     console.log(`${'='.repeat(50)}`)
 
-    const result = await buildNewsDataset(SITES, FEEDS, limit)
+    const result = await buildNewsDataset(SITES, FEEDS, limit, concurrency)
 
     return NextResponse.json({
       success: true,
@@ -559,9 +888,7 @@ export async function POST(request: Request) {
         total_links_procesados: result.total,
         nuevas_guardadas: result.nuevas,
         duplicadas_omitidas: result.duplicadas,
-        fuera_de_rango: result.omitidas_fecha,
         errores: result.errores,
-        filtro_horas: HORAS_LIMITE,
         timestamp: new Date().toISOString()
       }
     })

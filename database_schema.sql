@@ -58,13 +58,14 @@ CREATE TABLE noticia (
     fecha_publicacion TIMESTAMP NOT NULL,
     link TEXT, -- URL original
     cuerpo TEXT, -- Contenido completo
+    imagen_url TEXT, -- URL de la imagen principal de la noticia
     fuente_base VARCHAR(255), -- Dominio: 'www.clarin.com'
     extraido_en TIMESTAMP, -- Cuando fue scrapeada
     
     -- Campos procesados por LLM
     categoria VARCHAR(100), -- 'Economía', 'Seguridad', 'Salud', 'Agricultura'
     resumen TEXT,
-    urgencia VARCHAR(20) DEFAULT 'media', -- 'alta', 'media', 'baja'
+    urgencia VARCHAR(20) DEFAULT 'media', -- 'alta', 'media', 'baja', 'irrelevante'
     sentimiento VARCHAR(20), -- 'positivo', 'neutral', 'negativo'
     nivel_geografico VARCHAR(20), -- 'internacional', 'nacional', 'provincial', 'municipal'
     provincia VARCHAR(100), -- Provincia argentina si aplica
