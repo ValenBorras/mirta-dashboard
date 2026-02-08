@@ -49,22 +49,63 @@ function decodeHtmlEntities(text: string): string {
 }
 
 /**
- * Devuelve la fecha exactamente como viene del sitio web
+ * Convierte cualquier fecha a hora argentina (UTC-3) y la devuelve
+ * sin offset de timezone, para que se almacene correctamente como
+ * hora local en la columna TIMESTAMP de la base de datos.
+ *
+ * Problema original: sitios como Clarín/La Nación/TN/El País publican
+ * datePublished en UTC ("2026-02-08T17:38:29.000Z"), mientras que
+ * Ámbito usa offset explícito ("2026-02-08T14:52:39-03:00").
+ * PostgreSQL TIMESTAMP (sin timezone) descarta el sufijo y guarda el
+ * valor literal, lo que hacía que las fechas UTC quedaran 3 h adelantadas.
  */
 function preserveOriginalTimestamp(dateStr: string): string {
   if (!dateStr) {
-    return new Date().toISOString()
+    return toArgentinaLocal(new Date())
   }
-  
+
   const trimmed = dateStr.trim()
   const date = new Date(trimmed)
-  
+
   if (isNaN(date.getTime())) {
-    return new Date().toISOString()
+    return toArgentinaLocal(new Date())
   }
-  
-  // Devolver tal cual viene, sin modificaciones
-  return trimmed
+
+  // Si el string NO tiene indicador de timezone (ni Z, ni +/-HH:MM),
+  // asumimos que ya está en hora local argentina → devolver tal cual.
+  if (!hasTimezoneIndicator(trimmed)) {
+    return trimmed
+  }
+
+  // Si tiene timezone, convertir a hora argentina (UTC-3) y devolver
+  // sin offset para que PostgreSQL lo almacene como hora local.
+  return toArgentinaLocal(date)
+}
+
+/**
+ * Detecta si un string ISO tiene indicador de timezone
+ */
+function hasTimezoneIndicator(dateStr: string): boolean {
+  // Termina en Z (UTC)
+  if (dateStr.endsWith('Z')) return true
+  // Tiene offset como +HH:MM, -HH:MM, +HHMM, -HHMM al final
+  if (/[+-]\d{2}:?\d{2}$/.test(dateStr)) return true
+  return false
+}
+
+/**
+ * Convierte un Date (internamente UTC) a string ISO sin timezone
+ * en hora argentina (UTC-3).
+ * Ejemplo: Date(UTC 17:38) → "2026-02-08T14:38:00"
+ */
+function toArgentinaLocal(date: Date): string {
+  const argentinaOffsetMs = -3 * 60 * 60 * 1000 // UTC-3
+  const argTime = new Date(date.getTime() + argentinaOffsetMs)
+  // toISOString() devuelve UTC del objeto Date, pero como ya sumamos
+  // el offset, el resultado representa hora argentina.
+  const iso = argTime.toISOString() // "2026-02-08T14:38:29.000Z"
+  // Quitar la 'Z' final para que sea un timestamp sin timezone
+  return iso.replace('Z', '')
 }
 
 // Sitios de noticias a scrapear
@@ -215,7 +256,7 @@ async function extractAnalisisDigital(url: string): Promise<NoticiaExtraida | nu
       cuerpo,
       imagen_url: imagenUrl,
       fuente_base: parsedUrl.hostname,
-      extraido_en: new Date().toISOString()
+      extraido_en: toArgentinaLocal(new Date())
     }
   } catch (error) {
     console.error('Error extrayendo Análisis Digital:', error)
@@ -342,7 +383,7 @@ async function extractElOnce(url: string): Promise<NoticiaExtraida | null> {
       cuerpo,
       imagen_url: imagenUrl,
       fuente_base: parsedUrl.hostname,
-      extraido_en: new Date().toISOString()
+      extraido_en: toArgentinaLocal(new Date())
     }
   } catch (error) {
     console.error('Error extrayendo El Once:', error)
@@ -449,7 +490,7 @@ async function extractJsonLd(url: string): Promise<NoticiaExtraida | null> {
             cuerpo,
             imagen_url: imagenUrl,
             fuente_base: new URL(url).hostname,
-            extraido_en: new Date().toISOString()
+            extraido_en: toArgentinaLocal(new Date())
           }
         }
       } catch {
