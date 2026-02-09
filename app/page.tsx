@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { Header } from '@/components/Header'
 // import { KPICards } from '@/components/KPICards'
 import { AlertasUrgentes } from '@/components/AlertasUrgentes'
+import { NubePalabras } from '@/components/NubePalabras'
 import { NewsFeed } from '@/components/NewsFeed'
 import { ReportesCampo } from '@/components/ReportesCampo'
 import { Tendencias } from '@/components/Tendencias'
@@ -15,6 +16,7 @@ import {
   useNoticias, 
   useMencionesUsuario,
   useTendencias,
+  useNubePalabras,
   useReportesCampo,
   useNoticieros
 } from '@/hooks/useNoticias'
@@ -48,6 +50,7 @@ export default function Dashboard() {
   const noticiasHoy = noticias.filter(n => n.fecha_publicacion.startsWith(hoyStr))
   const { reportes: reportesCampo, loading: loadingReportes } = useReportesCampo()
   const { tendencias, loading: loadingTendencias } = useTendencias()
+  const { palabras: nubePalabras, loading: loadingNubePalabras } = useNubePalabras()
   const { noticieros, loading: loadingNoticieros } = useNoticieros()
   const { menciones, count: mencionesCount, loading: loadingMenciones } = useMencionesUsuario(
     session?.user?.name || ''
@@ -131,6 +134,13 @@ export default function Dashboard() {
           noticias={noticiasUrgentes}
           loading={loadingNoticias}
           onNoticiaClick={setSelectedNoticiaId}
+        />
+
+        {/* Nube de Palabras */}
+        <NubePalabras
+          palabras={nubePalabras}
+          loading={loadingNubePalabras}
+          onPalabraClick={handleTendenciaClick}
         />
 
         {/* Layout principal: 2 columnas */}
