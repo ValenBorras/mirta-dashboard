@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { X, ExternalLink, Clock, MapPin, User, Radio, Bookmark, Share2, Tag, Newspaper } from 'lucide-react'
-import { formatDate, formatTime, formatUbicacion } from '@/lib/utils'
+import { formatDate, formatTime, formatUbicacion, formatNewsParagraphs } from '@/lib/utils'
 import { CATEGORIA_COLORS, URGENCIA_COLORS, NoticiaConRelaciones } from '@/types/database'
 
 interface NoticiaModalProps {
@@ -142,8 +142,12 @@ export function NoticiaModal({ noticia, onClose }: NoticiaModalProps) {
 
                   {noticia.cuerpo && (
                     <div className="prose prose-sm max-w-none text-gray-700">
-                      {noticia.cuerpo.split('\n').map((paragraph, i) => (
-                        <p key={i} className="text-sm sm:text-base">{paragraph}</p>
+                      {formatNewsParagraphs(noticia.cuerpo).map((paragraph, i) => (
+                        <p 
+                          key={i} 
+                          className="text-sm sm:text-base mb-4 leading-relaxed text-justify"
+                          dangerouslySetInnerHTML={{ __html: paragraph }}
+                        />
                       ))}
                     </div>
                   )}
@@ -161,8 +165,12 @@ export function NoticiaModal({ noticia, onClose }: NoticiaModalProps) {
 
               {noticia.cuerpo && (
                 <div className="prose prose-sm max-w-none text-gray-700">
-                  {noticia.cuerpo.split('\n').map((paragraph, i) => (
-                    <p key={i} className="text-sm sm:text-base">{paragraph}</p>
+                  {formatNewsParagraphs(noticia.cuerpo).map((paragraph, i) => (
+                    <p 
+                      key={i} 
+                      className="text-sm sm:text-base mb-4 leading-relaxed text-justify"
+                      dangerouslySetInnerHTML={{ __html: paragraph }}
+                    />
                   ))}
                 </div>
               )}

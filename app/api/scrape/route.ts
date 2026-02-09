@@ -211,18 +211,24 @@ async function extractAnalisisDigital(url: string): Promise<NoticiaExtraida | nu
     const imagenUrl = $('meta[property="og:image"]').attr('content') || null
 
     // Extraer cuerpo del artículo - buscar párrafos con contenido significativo
+    // Usamos .html() en lugar de .text() para preservar formato como negritas
     const parrafos = $('p')
-      .map((_, el) => $(el).text().trim())
-      .get()
-      .filter(p => {
+      .map((_, el) => {
+        const html = $(el).html()?.trim() || ''
+        const text = $(el).text().trim()
         // Filtrar párrafos muy cortos o que sean elementos de navegación
-        return p.length > 50 && 
-               !p.includes('href=') && 
-               !p.includes('src=') &&
-               !p.includes('Newsletter') &&
-               !p.includes('Seguinos en') &&
-               !p.includes('Suscribite')
+        if (text.length > 50 && 
+            !text.includes('href=') && 
+            !text.includes('src=') &&
+            !text.includes('Newsletter') &&
+            !text.includes('Seguinos en') &&
+            !text.includes('Suscribite')) {
+          return html
+        }
+        return null
       })
+      .get()
+      .filter((p): p is string => p !== null)
 
     const cuerpo = decodeHtmlEntities(parrafos.join('\n\n'))
 
@@ -328,9 +334,13 @@ async function extractElOnce(url: string): Promise<NoticiaExtraida | null> {
       const paragraphs = $(selector)
       if (paragraphs.length > 0) {
         cuerpo = paragraphs
-          .map((_, el) => $(el).text().trim())
+          .map((_, el) => {
+            const html = $(el).html()?.trim() || ''
+            const text = $(el).text().trim()
+            return !shouldExclude(text) ? html : null
+          })
           .get()
-          .filter(p => !shouldExclude(p))
+          .filter((p): p is string => p !== null)
           .join('\n\n')
         if (cuerpo.length > 100) break
       }
@@ -339,9 +349,13 @@ async function extractElOnce(url: string): Promise<NoticiaExtraida | null> {
     // Si no encontramos cuerpo con selectores específicos, buscar todos los párrafos
     if (!cuerpo || cuerpo.length < 100) {
       cuerpo = $('p')
-        .map((_, el) => $(el).text().trim())
+        .map((_, el) => {
+          const html = $(el).html()?.trim() || ''
+          const text = $(el).text().trim()
+          return !shouldExclude(text) ? html : null
+        })
         .get()
-        .filter(p => !shouldExclude(p))
+        .filter((p): p is string => p !== null)
         .join('\n\n')
     }
 
@@ -457,8 +471,53 @@ async function extractJsonLd(url: string): Promise<NoticiaExtraida | null> {
           // Decodificar entidades HTML en todos los campos de texto
           const titulo = decodeHtmlEntities(article.headline as string)
           const descripcion = article.description ? decodeHtmlEntities(article.description as string) : null
-          const cuerpo = article.articleBody ? decodeHtmlEntities(article.articleBody as string) : null
           const autorDecoded = autor ? decodeHtmlEntities(autor) : null
+
+          // Intentar extraer el cuerpo desde HTML <p> tags (mejor formato con párrafos)
+          // antes de usar articleBody del JSON-LD (que viene todo en un solo bloque)
+          let cuerpo: string | null = null
+          
+          const contentSelectors = [
+            'article p',
+            '.article-content p', 
+            '.article-body p',
+            '.story-body p',
+            '.entry-content p',
+            '.post-content p',
+            '.content p',
+            '.body p',
+            'main p'
+          ]
+
+          for (const selector of contentSelectors) {
+            const paragraphs = $(selector)
+            if (paragraphs.length > 2) {
+              cuerpo = paragraphs
+                .map((_, el) => {
+                  const html = $(el).html()?.trim() || ''
+                  const text = $(el).text().trim()
+                  if (text.length > 30 && 
+                      !text.includes('Newsletter') &&
+                      !text.includes('Seguinos en') &&
+                      !text.includes('Suscribite')) {
+                    return html
+                  }
+                  return null
+                })
+                .get()
+                .filter((p): p is string => p !== null)
+                .join('\n\n')
+              if (cuerpo.length > 100) break
+              cuerpo = null
+            }
+          }
+
+          // Fallback: usar articleBody del JSON-LD si no se pudo extraer del HTML
+          if (!cuerpo) {
+            cuerpo = article.articleBody ? decodeHtmlEntities(article.articleBody as string) : null
+          } else {
+            cuerpo = decodeHtmlEntities(cuerpo)
+          }
 
           // Extraer URL de imagen desde JSON-LD
           let imagenUrl: string | null = null
