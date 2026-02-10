@@ -16,7 +16,6 @@ import {
   useNoticias, 
   useMencionesUsuario,
   useTendencias,
-  useNubePalabras,
   useReportesCampo,
   useNoticieros
 } from '@/hooks/useNoticias'
@@ -50,7 +49,6 @@ export default function Dashboard() {
   const noticiasHoy = noticias.filter(n => n.fecha_publicacion.startsWith(hoyStr))
   const { reportes: reportesCampo, loading: loadingReportes } = useReportesCampo()
   const { tendencias, loading: loadingTendencias } = useTendencias()
-  const { palabras: nubePalabras, loading: loadingNubePalabras } = useNubePalabras()
   const { noticieros, loading: loadingNoticieros } = useNoticieros()
   const { menciones, count: mencionesCount, loading: loadingMenciones } = useMencionesUsuario(
     session?.user?.name || ''
@@ -61,6 +59,25 @@ export default function Dashboard() {
     noticias.filter(n => n.urgencia === 'alta'),
     [noticias]
   )
+
+  // Palabras clave calculadas desde las noticias filtradas
+  const palabrasClave = useMemo(() => {
+    const conteo: Record<string, number> = {}
+    noticias.forEach(n => {
+      if (n.palabras_clave && Array.isArray(n.palabras_clave)) {
+        n.palabras_clave.forEach((palabra: string) => {
+          const normalizada = palabra.trim().toLowerCase()
+          if (normalizada.length > 2) {
+            conteo[normalizada] = (conteo[normalizada] || 0) + 1
+          }
+        })
+      }
+    })
+    return Object.entries(conteo)
+      .map(([palabra, count]) => ({ palabra, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15)
+  }, [noticias])
 
   // Noticia seleccionada para el modal (buscar en noticias y reportes de campo)
   const selectedNoticia = useMemo(() => 
@@ -136,10 +153,10 @@ export default function Dashboard() {
           onNoticiaClick={setSelectedNoticiaId}
         />
 
-        {/* Nube de Palabras */}
+        {/* Palabras Clave del Día */}
         <NubePalabras
-          palabras={nubePalabras}
-          loading={loadingNubePalabras}
+          palabras={palabrasClave}
+          loading={loadingNoticias}
           onPalabraClick={handleTendenciaClick}
         />
 
