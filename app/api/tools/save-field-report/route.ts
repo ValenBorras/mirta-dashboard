@@ -55,8 +55,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Parsear fecha del evento
-    const fechaPublicacion = parseFechaEvento(body.fecha_evento);
+    // La fecha del reporte debe ser la fecha de hoy (fecha de creación del reporte),
+    // NO la fecha en que ocurrió el evento.
+    const fechaPublicacion = new Date();
 
     // Crear la noticia
     const noticiaData = {
