@@ -59,11 +59,22 @@ export async function POST(request: NextRequest) {
     // NO la fecha en que ocurrió el evento.
     const fechaPublicacion = new Date();
 
+    // Añadir la fecha del evento a la descripción/cuerpo si el agente la declaró.
+    // La `fecha_publicacion` seguirá siendo la fecha de hoy (fecha del reporte).
+    const eventDateNote = body.fecha_evento && body.fecha_evento.trim()
+      ? `\n\nFecha del evento reportada: ${body.fecha_evento}`
+      : '';
+
+    const descripcionFinal = `${body.descripcion}${eventDateNote}`;
+    const cuerpoFinal = body.cuerpo && body.cuerpo.trim()
+      ? `${body.cuerpo}${eventDateNote}`
+      : descripcionFinal;
+
     // Crear la noticia
     const noticiaData = {
       titulo: body.titulo.substring(0, 500), // Limitar a 500 chars
-      descripcion: body.descripcion,
-      cuerpo: body.cuerpo || body.descripcion,
+      descripcion: descripcionFinal,
+      cuerpo: cuerpoFinal,
       autor: agent.nombre,
       fuente: `Agente de Campo - ${agent.provincia || 'Sin provincia'}`,
       fuente_base: 'reporte_campo',
