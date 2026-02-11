@@ -57,7 +57,14 @@ export async function POST(request: NextRequest) {
 
     // La fecha del reporte debe ser la fecha de hoy (fecha de creación del reporte),
     // NO la fecha en que ocurrió el evento.
-    const fechaPublicacion = new Date();
+    // Usar la hora local (hora de ahora) en formato ISO local para evitar que se vea
+    // convertida a UTC (p. ej. +3h). Esto guarda la fecha/hora local exacta.
+    const now = new Date();
+    function toLocalISOString(d: Date): string {
+      const tzoffset = d.getTimezoneOffset() * 60000; // offset in ms
+      return new Date(d.getTime() - tzoffset).toISOString().slice(0, -1);
+    }
+    const fechaPublicacion = toLocalISOString(now);
 
     // Añadir la fecha del evento a la descripción/cuerpo si el agente la declaró.
     // La `fecha_publicacion` seguirá siendo la fecha de hoy (fecha del reporte).
@@ -78,8 +85,8 @@ export async function POST(request: NextRequest) {
       autor: agent.nombre,
       fuente: `Agente de Campo - ${agent.provincia || 'Sin provincia'}`,
       fuente_base: 'reporte_campo',
-      fecha_publicacion: fechaPublicacion.toISOString(),
-      extraido_en: new Date().toISOString(),
+      fecha_publicacion: fechaPublicacion,
+      extraido_en: toLocalISOString(now),
       categoria: body.categoria,
       urgencia: body.urgencia || 'media',
       sentimiento: 'neutral' as const,
