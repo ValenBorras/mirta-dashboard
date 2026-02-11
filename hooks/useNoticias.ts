@@ -311,7 +311,7 @@ export function useTendencias() {
         const ordenado = Object.entries(conteo)
           .map(([palabra, count]) => ({ palabra, count }))
           .sort((a, b) => b.count - a.count)
-          .slice(0, 5)
+          .slice(0, 15)
 
         setTendencias(ordenado)
       } catch (err) {

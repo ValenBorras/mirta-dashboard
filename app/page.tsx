@@ -8,6 +8,7 @@ import { AlertasUrgentes } from '@/components/AlertasUrgentes'
 import { NewsFeed } from '@/components/NewsFeed'
 import { ReportesCampo } from '@/components/ReportesCampo'
 import { Tendencias } from '@/components/Tendencias'
+import { NubePalabras } from '@/components/NubePalabras'
 import { MencionesUsuario } from '@/components/MencionesUsuario'
 import { NoticiaModal } from '@/components/NoticiaModal'
 import { GestionAgentes } from '@/components/GestionAgentes'
@@ -125,6 +126,13 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        {/* Palabras Clave del Día */}
+        <NubePalabras
+          palabras={tendencias}
+          loading={loadingTendencias}
+          onPalabraClick={handleTendenciaClick}
+        />
 
         {/* Alertas Urgentes */}
         <AlertasUrgentes
