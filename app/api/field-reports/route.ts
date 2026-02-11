@@ -30,9 +30,6 @@ const conversationSessions: Map<string, string> = new Map();
 
 const REJECTION_MESSAGE = `Tu número no corresponde a ningún agente registrado.`;
 
-/** Mensaje fijo cuando la consulta no es sobre reportes de campo */
-const OFF_TOPIC_MESSAGE = `Solo puedo ayudarte con reportes de campo. Escribime sobre el evento o situación que quieras reportar (qué pasó, dónde, cuándo) y lo registro.`;
-
 /**
  * POST handler - Webhook entry point from n8n
  */
@@ -108,72 +105,6 @@ function normalizePhoneNumber(phone: string): string {
 }
 
 /**
- * Determina si el mensaje está relacionado con reportes de campo.
- * Solo debemos procesar con el agente AI mensajes que sean datos o consultas
- * sobre reportes (eventos, situaciones a reportar, datos del reporte, etc.).
- */
-async function isFieldReportRelated(messageText: string): Promise<boolean> {
-  const trimmed = messageText.trim();
-  if (!trimmed) return false;
-
-  // Comandos especiales siempre son válidos (se manejan después)
-  if (trimmed.toLowerCase() === '!reset' || trimmed.toLowerCase() === '!nuevo') {
-    return true;
-  }
-
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `Eres un clasificador. Responde ÚNICAMENTE con una palabra: SÍ o NO.
-Un mensaje es "relacionado con reportes de campo" SOLO si el usuario:
-- Está enviando o describiendo un evento/situación para reportar (noticia de campo)
-- Está dando datos para un reporte (título, descripción, lugar, fecha, categoría)
-- Está respondiendo preguntas sobre un reporte que está armando
-- Pregunta cómo hacer un reporte o qué datos enviar
-- Saluda e indica que va a reportar algo
-
-NO es relacionado si:
-- Preguntas generales (clima, hora, chistes, opiniones)
-- Conversación casual sin intención de reportar
-- Consultas sobre otros temas (deportes, entretenimiento, etc.)
-- Cualquier tema ajeno a enviar o completar un reporte de campo.`,
-          },
-          {
-            role: 'user',
-            content: `¿Este mensaje está relacionado con reportes de campo? Responde solo SÍ o NO.\n\nMensaje: "${trimmed.slice(0, 500)}"`,
-          },
-        ],
-        max_tokens: 10,
-        temperature: 0,
-      }),
-    });
-
-    if (!response.ok) {
-      console.warn('Clasificador de relevancia falló, asumimos relevante:', await response.text());
-      return true; // En caso de error, permitir que el agente principal decida
-    }
-
-    const data = await response.json();
-    const answer = (data.choices?.[0]?.message?.content ?? '').trim().toUpperCase();
-    const isRelated = answer.startsWith('SÍ') || answer.startsWith('SI') || answer.startsWith('YES');
-    console.log(`📌 Relevancia reporte de campo: "${answer}" -> ${isRelated}`);
-    return isRelated;
-  } catch (error) {
-    console.warn('Error en isFieldReportRelated, asumimos relevante:', error);
-    return true;
-  }
-}
-
-/**
  * Verifica si el teléfono está en la whitelist de agentes de campo
  */
 async function checkWhitelist(phone: string): Promise<{
@@ -219,13 +150,6 @@ async function processFieldReportMessage(
     if (messageText.toLowerCase() === '!reset' || messageText.toLowerCase() === '!nuevo') {
       conversationSessions.delete(conversationId);
       return '✅ Conversación reiniciada. Puedes comenzar a contarme sobre un nuevo reporte de campo.';
-    }
-
-    // Solo procesar con el agente si el mensaje es relevante para reportes de campo
-    const isRelevant = await isFieldReportRelated(messageText);
-    if (!isRelevant) {
-      console.log(`⛔ Mensaje no relacionado con reportes de campo, se responde con mensaje fijo`);
-      return OFF_TOPIC_MESSAGE;
     }
 
     // Si no hay sesión, crear una nueva
@@ -523,13 +447,7 @@ La urgencia es opcional y por defecto es "media".`,
 function buildSystemPrompt(agent: { nombre: string; provincia: string | null; ciudad: string | null }): string {
   const today = new Date().toISOString().split('T')[0];
   
-  return `Eres M.I.R.T.A. (Monitor Inteligente de Reportes y Temas de Actualidad), un asistente que SOLO ayuda a recibir y procesar reportes de campo.
-
-REGLA CRÍTICA - ALCANCE:
-- Tu ÚNICA función es obtener datos para reportes de campo (eventos, situaciones, noticias del territorio).
-- NO respondas a consultas que no sean sobre reportes: ni clima, ni hora, ni chistes, ni opiniones, ni otros temas.
-- Si en cualquier momento el agente escribe algo que no sea dar datos o hablar del reporte, responde ÚNICAMENTE: "Solo puedo ayudarte con reportes de campo. Escribime sobre el evento o situación que quieras reportar (qué pasó, dónde, cuándo) y lo registro."
-- No des información ni entres en conversación sobre temas ajenos a los reportes de campo.
+  return `Eres M.I.R.T.A. (Monitor Inteligente de Reportes y Temas de Actualidad), un asistente de inteligencia especializado en recibir y procesar reportes de campo de agentes legislativos.
 
 INFORMACIÓN DEL AGENTE ACTUAL:
 - Nombre: ${agent.nombre}
@@ -554,14 +472,18 @@ DATOS OPCIONALES (pregunta si son relevantes):
 CATEGORÍAS DISPONIBLES:
 Economía, Seguridad, Salud, Educación, Infraestructura, Justicia, Medio Ambiente, Trabajo, Política Interna, Relaciones Internacionales, Tecnología, Cultura
 
-INSTRUCCIONES:
-1. Saluda brevemente al agente por su nombre la primera vez (solo si está iniciando un reporte)
-2. Pregunta de forma conversacional SOLO para obtener los datos del reporte
-3. Si el agente da información parcial, haz preguntas de seguimiento
-4. Cuando tengas TODOS los datos obligatorios, confirma con el agente antes de guardar
-5. Usa la función save_field_report SOLO cuando el agente confirme que los datos son correctos
-6. Después de guardar, confirma el éxito e indica que puede enviar otro reporte
-7. Si el agente se desvía del tema del reporte, responde solo con el mensaje fijo de la REGLA CRÍTICA y no continúes esa conversación
+  INSTRUCCIONES:
+  1. Saluda brevemente al agente por su nombre la primera vez
+  2. Pregunta de forma conversacional para obtener los datos
+  3. Si el agente da información parcial, haz preguntas de seguimiento
+  4. Cuando tengas TODOS los datos obligatorios, confirma con el agente antes de guardar
+  5. Usa la función save_field_report SOLO cuando el agente confirme que los datos son correctos
+  6. Después de guardar, confirma el éxito e indica que puede enviar otro reporte
+
+  LIMITACIONES Y RESPUESTAS A MENSAJES NO RELACIONADOS:
+  - Si el usuario envía un mensaje claramente NO relacionado con reportes de campo (por ejemplo: pedir recetas de cocina, chistes, preguntas personales, compras, u otros temas ajenos a la recolección de datos de campo), responde exactamente con el siguiente texto breve y cordial: "Solo puedo ayudarte con reportes de campo. Escribime sobre el evento o situación que quieras reportar (qué pasó, dónde, cuándo) y lo registro.". No añadas explicaciones adicionales.
+  - No uses ese mensaje para cortar conversaciones que potencialmente contienen información útil para un reporte. Si el contenido del mensaje podría ser parte de un reporte (aunque falten detalles), pide una o dos preguntas de seguimiento para clarificar y extraer información en vez de rechazar.
+  - Si hay duda sobre si el mensaje es relevante, prioriza pedir clarificación (máximo 2 preguntas) en lugar de enviar el mensaje restrictivo.
 
 FORMATO:
 - Sé conciso, esto es WhatsApp

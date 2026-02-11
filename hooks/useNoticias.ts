@@ -327,60 +327,6 @@ export function useTendencias() {
   return { tendencias, loading }
 }
 
-export function useNubePalabras() {
-  const [palabras, setPalabras] = useState<{ palabra: string; count: number }[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchPalabras() {
-      try {
-        const hoy = new Date()
-        hoy.setHours(0, 0, 0, 0)
-
-        const { data, error } = await supabase
-          .from('noticia')
-          .select('palabras_clave')
-          .eq('procesado_llm', true)
-          .neq('urgencia', 'irrelevante')
-          .gte('fecha_publicacion', hoy.toISOString())
-
-        if (error) throw error
-
-        // Contar palabras clave
-        const conteo: Record<string, number> = {}
-        interface PalabrasData {
-          palabras_clave: string[] | null
-        }
-        (data as PalabrasData[] | null)?.forEach(noticia => {
-          if (noticia.palabras_clave && Array.isArray(noticia.palabras_clave)) {
-            noticia.palabras_clave.forEach((palabra: string) => {
-              const normalizada = palabra.trim().toLowerCase()
-              if (normalizada.length > 2) {
-                conteo[normalizada] = (conteo[normalizada] || 0) + 1
-              }
-            })
-          }
-        })
-
-        const ordenado = Object.entries(conteo)
-          .map(([palabra, count]) => ({ palabra, count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 15)
-
-        setPalabras(ordenado)
-      } catch (err) {
-        console.error('Error fetching nube de palabras:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchPalabras()
-  }, [])
-
-  return { palabras, loading }
-}
-
 export function useNoticieros() {
   const [noticieros, setNoticieros] = useState<Noticiero[]>([])
   const [loading, setLoading] = useState(true)

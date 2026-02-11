@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react'
 import { Header } from '@/components/Header'
 // import { KPICards } from '@/components/KPICards'
 import { AlertasUrgentes } from '@/components/AlertasUrgentes'
-import { NubePalabras } from '@/components/NubePalabras'
 import { NewsFeed } from '@/components/NewsFeed'
 import { ReportesCampo } from '@/components/ReportesCampo'
 import { Tendencias } from '@/components/Tendencias'
@@ -59,25 +58,6 @@ export default function Dashboard() {
     noticias.filter(n => n.urgencia === 'alta'),
     [noticias]
   )
-
-  // Palabras clave calculadas desde las noticias filtradas
-  const palabrasClave = useMemo(() => {
-    const conteo: Record<string, number> = {}
-    noticias.forEach(n => {
-      if (n.palabras_clave && Array.isArray(n.palabras_clave)) {
-        n.palabras_clave.forEach((palabra: string) => {
-          const normalizada = palabra.trim().toLowerCase()
-          if (normalizada.length > 2) {
-            conteo[normalizada] = (conteo[normalizada] || 0) + 1
-          }
-        })
-      }
-    })
-    return Object.entries(conteo)
-      .map(([palabra, count]) => ({ palabra, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 15)
-  }, [noticias])
 
   // Noticia seleccionada para el modal (buscar en noticias y reportes de campo)
   const selectedNoticia = useMemo(() => 
@@ -151,13 +131,6 @@ export default function Dashboard() {
           noticias={noticiasUrgentes}
           loading={loadingNoticias}
           onNoticiaClick={setSelectedNoticiaId}
-        />
-
-        {/* Palabras Clave del Día */}
-        <NubePalabras
-          palabras={palabrasClave}
-          loading={loadingNoticias}
-          onPalabraClick={handleTendenciaClick}
         />
 
         {/* Layout principal: 2 columnas */}
