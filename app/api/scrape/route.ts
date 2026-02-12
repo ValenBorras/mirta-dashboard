@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server'
 import * as cheerio from 'cheerio'
 import { supabaseAdmin } from '@/lib/supabase-server'
 
+/**
+ * Rechaza requests entre las 22:00 y las 03:59 hora Argentina para ahorrar CPU.
+ */
+function isNighttime(): boolean {
+  const hourStr = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    hour: 'numeric',
+    hour12: false,
+  }).format(new Date())
+  const hour = parseInt(hourStr, 10)
+  return hour >= 22 || hour < 4
+}
+
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 }
@@ -943,6 +956,14 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  // Bloquear entre 22:00 y 03:59 hora Argentina
+  if (isNighttime()) {
+    return NextResponse.json(
+      { success: false, error: 'Scraping deshabilitado entre las 22:00 y las 04:00 (hora Argentina)' },
+      { status: 503 }
+    )
+  }
+
   try {
     // Obtener parámetros del body
     let limit = 30

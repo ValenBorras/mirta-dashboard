@@ -57,14 +57,25 @@ export async function POST(request: NextRequest) {
 
     // La fecha del reporte debe ser la fecha de hoy (fecha de creación del reporte),
     // NO la fecha en que ocurrió el evento.
-    // Usar la hora local (hora de ahora) en formato ISO local para evitar que se vea
-    // convertida a UTC (p. ej. +3h). Esto guarda la fecha/hora local exacta.
+    // Convertir explícitamente a hora Argentina (UTC-3) para que se guarde correcta
+    // independientemente de la zona horaria del servidor (ej. UTC en Vercel).
     const now = new Date();
-    function toLocalISOString(d: Date): string {
-      const tzoffset = d.getTimezoneOffset() * 60000; // offset in ms
-      return new Date(d.getTime() - tzoffset).toISOString().slice(0, -1);
+    function toArgentinaISO(d: Date): string {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Argentina/Buenos_Aires',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+      const parts = formatter.formatToParts(d);
+      const get = (type: string) => parts.find(p => p.type === type)?.value || '00';
+      return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}:${get('second')}`;
     }
-    const fechaPublicacion = toLocalISOString(now);
+    const fechaPublicacion = toArgentinaISO(now);
 
     // Añadir la fecha del evento a la descripción/cuerpo si el agente la declaró.
     // La `fecha_publicacion` seguirá siendo la fecha de hoy (fecha del reporte).
@@ -86,7 +97,7 @@ export async function POST(request: NextRequest) {
       fuente: `Agente de Campo - ${agent.provincia || 'Sin provincia'}`,
       fuente_base: 'reporte_campo',
       fecha_publicacion: fechaPublicacion,
-      extraido_en: toLocalISOString(now),
+      extraido_en: toArgentinaISO(now),
       categoria: body.categoria,
       urgencia: body.urgencia || 'media',
       sentimiento: 'neutral' as const,

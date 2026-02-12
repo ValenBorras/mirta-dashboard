@@ -49,13 +49,13 @@ export function useNoticias(filters: Filters = {}) {
         query = query.eq('tipo_fuente', filters.tipo_fuente)
       }
       if (filters.fecha_desde) {
-        // Agregar hora inicio del día (00:00:00) para el filtro desde
-        const fechaDesdeCompleta = `${filters.fecha_desde}T00:00:00.000Z`
+        // Inicio del día sin indicador de zona — coincide con timestamps guardados
+        const fechaDesdeCompleta = `${filters.fecha_desde}T00:00:00`
         query = query.gte('fecha_publicacion', fechaDesdeCompleta)
       }
       if (filters.fecha_hasta) {
-        // Agregar hora fin del día (23:59:59) para el filtro hasta
-        const fechaHastaCompleta = `${filters.fecha_hasta}T23:59:59.999Z`
+        // Fin del día sin indicador de zona
+        const fechaHastaCompleta = `${filters.fecha_hasta}T23:59:59.999`
         query = query.lte('fecha_publicacion', fechaHastaCompleta)
       }
       if (filters.busqueda) {
@@ -158,10 +158,14 @@ export function useNoticiasHoy() {
 
   const fetchStats = useCallback(async () => {
     setLoading(true)
-    const hoy = new Date()
-    hoy.setHours(0, 0, 0, 0)
-    const ayer = new Date(hoy)
-    ayer.setDate(ayer.getDate() - 1)
+    // Calcular "hoy" y "ayer" en zona horaria Argentina
+    const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
+    const ayerDate = new Date()
+    ayerDate.setDate(ayerDate.getDate() - 1)
+    const ayerStr = ayerDate.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
+
+    const hoyDesde = `${hoyStr}T00:00:00`
+    const ayerDesde = `${ayerStr}T00:00:00`
 
     try {
       const [hoyResult, ayerResult, urgentesResult, reportesResult] = await Promise.all([
@@ -169,18 +173,18 @@ export function useNoticiasHoy() {
           .from('noticia')
           .select('id', { count: 'exact', head: true })
           .neq('urgencia', 'irrelevante')
-          .gte('fecha_publicacion', hoy.toISOString()),
+          .gte('fecha_publicacion', hoyDesde),
         supabase
           .from('noticia')
           .select('id', { count: 'exact', head: true })
           .neq('urgencia', 'irrelevante')
-          .gte('fecha_publicacion', ayer.toISOString())
-          .lt('fecha_publicacion', hoy.toISOString()),
+          .gte('fecha_publicacion', ayerDesde)
+          .lt('fecha_publicacion', hoyDesde),
         supabase
           .from('noticia')
           .select('id', { count: 'exact', head: true })
           .eq('urgencia', 'alta')
-          .gte('fecha_publicacion', hoy.toISOString()),
+          .gte('fecha_publicacion', hoyDesde),
         supabase
           .from('noticia')
           .select('id', { count: 'exact', head: true })
@@ -280,14 +284,14 @@ export function useTendencias() {
   useEffect(() => {
     async function fetchTendencias() {
       try {
-        const hoy = new Date()
-        hoy.setHours(0, 0, 0, 0)
+        const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
+        const hoyDesde = `${hoyStr}T00:00:00`
 
         const { data, error } = await supabase
           .from('noticia')
           .select('palabras_clave, categoria')
           .neq('urgencia', 'irrelevante')
-          .gte('fecha_publicacion', hoy.toISOString())
+          .gte('fecha_publicacion', hoyDesde)
 
         if (error) throw error
 

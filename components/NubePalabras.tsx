@@ -78,7 +78,7 @@ export function NubePalabras({ palabras, loading, onPalabraClick }: NubePalabras
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-sm sm:text-base text-gray-900 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-            Palabras Clave del Día
+            Tendencias del Día
           </h2>
           <span className="text-xs text-gray-400">
             {topPalabras.length} términos principales

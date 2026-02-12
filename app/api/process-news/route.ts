@@ -3,6 +3,19 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 import fs from 'fs'
 import path from 'path'
 
+/**
+ * Rechaza requests entre las 22:00 y las 03:59 hora Argentina para ahorrar CPU.
+ */
+function isNighttime(): boolean {
+  const hourStr = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    hour: 'numeric',
+    hour12: false,
+  }).format(new Date())
+  const hour = parseInt(hourStr, 10)
+  return hour >= 22 || hour < 4
+}
+
 // Leer el prompt del archivo
 const promptPath = path.join(process.cwd(), 'prompts', 'news-analysis.md')
 
@@ -95,6 +108,14 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  // Bloquear entre 22:00 y 03:59 hora Argentina
+  if (isNighttime()) {
+    return NextResponse.json(
+      { success: false, error: 'Procesamiento deshabilitado entre las 22:00 y las 04:00 (hora Argentina)' },
+      { status: 503 }
+    )
+  }
+
   try {
     // Obtener parámetros del body
     let limit: number | null = null

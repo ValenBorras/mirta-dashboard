@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
+import type { NoticiaConRelaciones } from '@/types/database'
 import { useSession } from 'next-auth/react'
 import { Header } from '@/components/Header'
 // import { KPICards } from '@/components/KPICards'
 import { AlertasUrgentes } from '@/components/AlertasUrgentes'
 import { NewsFeed } from '@/components/NewsFeed'
 import { ReportesCampo } from '@/components/ReportesCampo'
-import { Tendencias } from '@/components/Tendencias'
 import { NubePalabras } from '@/components/NubePalabras'
 import { MencionesUsuario } from '@/components/MencionesUsuario'
 import { NoticiaModal } from '@/components/NoticiaModal'
@@ -15,7 +15,6 @@ import { GestionAgentes } from '@/components/GestionAgentes'
 import { 
   useNoticias, 
   useMencionesUsuario,
-  useTendencias,
   useReportesCampo,
   useNoticieros
 } from '@/hooks/useNoticias'
@@ -23,8 +22,8 @@ import {
 export default function Dashboard() {
   const { data: session } = useSession()
   
-  // Obtener fecha de hoy en formato YYYY-MM-DD
-  const hoyStr = new Date().toISOString().split('T')[0]
+  // Obtener fecha de hoy en formato YYYY-MM-DD (zona horaria Argentina)
+  const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
   
   const [filters, setFilters] = useState<{
     categoria?: string
@@ -48,8 +47,26 @@ export default function Dashboard() {
   // Calcular noticias de hoy de forma dinámica según el filtro actual
   const noticiasHoy = noticias.filter(n => n.fecha_publicacion.startsWith(hoyStr))
   const { reportes: reportesCampo, loading: loadingReportes } = useReportesCampo()
-  const { tendencias, loading: loadingTendencias } = useTendencias()
   const { noticieros, loading: loadingNoticieros } = useNoticieros()
+
+  // Calcular tendencias (palabras clave) a partir de las noticias ya filtradas
+  const tendenciasFromNoticias = useMemo(() => {
+    const conteo: Record<string, number> = {}
+    noticias.forEach((noticia: NoticiaConRelaciones) => {
+      if (noticia.palabras_clave && Array.isArray(noticia.palabras_clave)) {
+        noticia.palabras_clave.forEach((palabra: string) => {
+          conteo[palabra] = (conteo[palabra] || 0) + 1
+        })
+      }
+      if (noticia.categoria) {
+        conteo[noticia.categoria] = (conteo[noticia.categoria] || 0) + 1
+      }
+    })
+    return Object.entries(conteo)
+      .map(([palabra, count]) => ({ palabra, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15)
+  }, [noticias])
   const { menciones, count: mencionesCount, loading: loadingMenciones } = useMencionesUsuario(
     session?.user?.name || ''
   )
@@ -127,10 +144,10 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Palabras Clave del Día */}
+        {/* Tendencias del Día */}
         <NubePalabras
-          palabras={tendencias}
-          loading={loadingTendencias}
+          palabras={tendenciasFromNoticias}
+          loading={loadingNoticias}
           onPalabraClick={handleTendenciaClick}
         />
 
@@ -177,13 +194,6 @@ export default function Dashboard() {
               reportes={reportesCampo}
               loading={loadingReportes}
               onReporteClick={setSelectedNoticiaId}
-            />
-
-            {/* Tendencias */}
-            <Tendencias
-              tendencias={tendencias}
-              loading={loadingTendencias}
-              onTendenciaClick={handleTendenciaClick}
             />
           </div>
         </div>
