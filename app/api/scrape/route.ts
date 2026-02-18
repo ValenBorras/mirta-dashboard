@@ -711,58 +711,98 @@ async function getRssLinks(feedUrls: string[]): Promise<string[]> {
 }
 
 /**
- * Obtiene o crea un noticiero por su fuente_base
+ * Normaliza variantes de fuente_base al dominio canónico.
+ * Ejemplo: 'www.lapoliticaonline.com.ar' → 'www.lapoliticaonline.com'
+ */
+function normalizeFuenteBase(fuenteBase: string): string {
+  const aliases: Record<string, string> = {
+    'www.lapoliticaonline.com.ar': 'www.lapoliticaonline.com',
+    'lapoliticaonline.com.ar': 'www.lapoliticaonline.com',
+    'lapoliticaonline.com': 'www.lapoliticaonline.com',
+  }
+  return aliases[fuenteBase] || fuenteBase
+}
+
+// Cache en memoria para evitar race conditions al crear noticieros en paralelo
+const noticieroCache = new Map<string, number>()
+// Promesas en vuelo para serializar la creación por fuente_base
+const noticieroInFlight = new Map<string, Promise<number | null>>()
+
+/**
+ * Obtiene o crea un noticiero por su fuente_base.
+ * Usa cache en memoria + serialización de promesas para evitar duplicados
+ * cuando se procesan múltiples noticias de la misma fuente en paralelo.
  */
 async function getOrCreateNoticiero(fuenteBase: string): Promise<number | null> {
-  try {
-    // Buscar noticiero existente
-    const { data: existing } = await supabaseAdmin
-      .from('noticiero')
-      .select('id')
-      .eq('fuente_base', fuenteBase)
-      .maybeSingle()
+  const normalizedFuente = normalizeFuenteBase(fuenteBase)
 
-    if (existing && existing.id) {
-      return existing.id
-    }
+  // 1. Revisar cache en memoria
+  const cached = noticieroCache.get(normalizedFuente)
+  if (cached) return cached
 
-    // Crear nuevo noticiero
-    const nombreMap: Record<string, string> = {
-      'www.clarin.com': 'Clarín',
-      'www.lanacion.com.ar': 'La Nación',
-      'www.tn.com.ar': 'Todo Noticias',
-      'cnnespanol.cnn.com': 'CNN Español',
-      'elpais.com': 'El País',
-      'www.ambito.com': 'Ámbito',
-      'www.lapoliticaonline.com': 'La Política Online',
-      'www.lapoliticaonline.com.ar': 'La Política Online',
-      'www.elonce.com': 'El Once',
-      'www.analisisdigital.com.ar': 'Análisis Digital'
-    }
+  // 2. Si ya hay una promesa en vuelo para esta fuente, esperarla
+  const inFlight = noticieroInFlight.get(normalizedFuente)
+  if (inFlight) return inFlight
 
-    const nombre = nombreMap[fuenteBase] || fuenteBase
+  // 3. Crear la promesa y registrarla
+  const promise = (async (): Promise<number | null> => {
+    try {
+      // Buscar noticiero existente
+      const { data: existing } = await supabaseAdmin
+        .from('noticiero')
+        .select('id')
+        .eq('fuente_base', normalizedFuente)
+        .maybeSingle()
 
-    const { data: newNoticiero, error } = await supabaseAdmin
-      .from('noticiero')
-      .insert({
-        nombre,
-        fuente_base: fuenteBase,
-        tipo: 'digital',
-        activo: true
-      })
-      .select('id')
-      .single()
+      if (existing && existing.id) {
+        noticieroCache.set(normalizedFuente, existing.id)
+        return existing.id
+      }
 
-    if (error) {
-      console.error('Error creando noticiero:', error)
+      // Crear nuevo noticiero
+      const nombreMap: Record<string, string> = {
+        'www.clarin.com': 'Clarín',
+        'www.lanacion.com.ar': 'La Nación',
+        'www.tn.com.ar': 'Todo Noticias',
+        'cnnespanol.cnn.com': 'CNN Español',
+        'elpais.com': 'El País',
+        'www.ambito.com': 'Ámbito',
+        'www.lapoliticaonline.com': 'La Política Online',
+        'www.elonce.com': 'El Once',
+        'www.analisisdigital.com.ar': 'Análisis Digital',
+        'cincodias.elpais.com': 'cincodias.elpais.com',
+      }
+
+      const nombre = nombreMap[normalizedFuente] || normalizedFuente
+
+      const { data: newNoticiero, error } = await supabaseAdmin
+        .from('noticiero')
+        .insert({
+          nombre,
+          fuente_base: normalizedFuente,
+          tipo: 'digital',
+          activo: true
+        })
+        .select('id')
+        .single()
+
+      if (error) {
+        console.error('Error creando noticiero:', error)
+        return null
+      }
+
+      noticieroCache.set(normalizedFuente, newNoticiero.id)
+      return newNoticiero.id
+    } catch (error) {
+      console.error('Error en getOrCreateNoticiero:', error)
       return null
+    } finally {
+      noticieroInFlight.delete(normalizedFuente)
     }
+  })()
 
-    return newNoticiero.id
-  } catch (error) {
-    console.error('Error en getOrCreateNoticiero:', error)
-    return null
-  }
+  noticieroInFlight.set(normalizedFuente, promise)
+  return promise
 }
 
 
@@ -799,7 +839,7 @@ async function saveNoticia(noticia: NoticiaExtraida, noticieroId: number): Promi
       link: noticia.link,
       cuerpo: noticia.cuerpo,
       imagen_url: noticia.imagen_url,
-      fuente_base: noticia.fuente_base,
+      fuente_base: normalizeFuenteBase(noticia.fuente_base),
       extraido_en: noticia.extraido_en,
       tipo_fuente: 'noticiero',
       noticiero_id: noticieroId,
